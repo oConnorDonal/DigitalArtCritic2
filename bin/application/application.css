@@ -1,0 +1,22 @@
+/* JavaFX CSS - Leave this comment until you have at least create one rule which uses -fx-Property */
+
+#image_window{
+	-fx-background-color: #00040B;
+}
+#menu_bar{
+	-fx-background-color:#007AA3;
+	
+	
+}
+#smallImage{
+	-fx-border-image-width: 3px;
+	-fx-border-color: #007AA3;
+	
+}
+#leftOptionsPane{
+	-fx-background-color: #669999;
+	
+}
+#bottomTextPane{
+	-fx-background-color: #A3C2C2;
+}
