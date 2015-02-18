@@ -460,7 +460,7 @@ public class MainController {
 				//if(dstNorm.get(j,i,data) > 200)
 				if(p > 200)
 				{
-					Imgproc.circle(dstNormScaled, new Point(i,j), 3, new Scalar(255,0,0));
+					Imgproc.circle(dstNormScaled, new Point(i,j), 3, new Scalar(255,0,255));
 				}
 				
 			}		
