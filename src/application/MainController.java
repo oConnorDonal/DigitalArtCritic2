@@ -17,6 +17,7 @@ import javax.imageio.ImageIO;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
@@ -76,7 +77,7 @@ public class MainController {
 		 BufferedImage image = ImageIO.read(file);		*/
 		
 		try {
-			image = ImageIO.read( new File("src/application/face.jpg"));
+			image = ImageIO.read( new File("src/application/chess.jpg"));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -98,7 +99,7 @@ public class MainController {
 		//BufferedImage image1 = format.matToBuffColour(  showLines( toCanny((format.buffToMat(image)) ) ,format.buffToMat(image) ))   ;
 		// BufferedImage image1 = format.matToBinBuff(showLines( format.toThresh(format.buffToMat(image)),format.buffToMat(image)));
 		//BufferedImage image1 = format.matToBuff(toCanny(format.buffToMat(image)));
-		BufferedImage image1 = format.matToBuff(getCorners(format.buffToMat(image))); 
+		BufferedImage image1 = format.matToBuff(getTcorners(format.buffToMat(image),format.buffToMat(image))); 
 		//BufferedImage image1 = matToBinBuff(toThresh(buffToMat(image)));
 		 
 		Image original = SwingFXUtils.toFXImage(image, null);	
@@ -435,7 +436,7 @@ public class MainController {
 		
 	}
 	
-	public Mat getCorners (Mat inImage){
+	public Mat getCorners (Mat inImage, Mat originalImage){
 		
 		Mat gray  = new Mat();
 		//Mat outImage = new Mat();
@@ -445,29 +446,62 @@ public class MainController {
 		Mat dstNormScaled = new Mat();
 		
 		Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);
+		//Imgproc.g
 		
-		Imgproc.cornerHarris(gray, dst, 2, 3, 1);
-		Core.normalize(dst, dstNorm,0,255,Core.NORM_MINMAX,CvType.CV_32FC1,mask);
-		Core.convertScaleAbs(dstNorm, dstNormScaled);
+		//Imgproc.cornerHarris(gray, dst, 2, 3, Core.BORDER_DEFAULT);
+		//Core.normalize(dst, dstNorm,0,255,Core.NORM_MINMAX,CvType.CV_32FC1,mask);
+		//Core.convertScaleAbs(dstNorm, dstNormScaled);
 		
-		double [] data = new double [dstNorm.rows() * dstNorm.cols() * (int) dstNorm.elemSize()];
+		float [] data = new float [dstNorm.rows() * dstNorm.cols() * (int) dstNorm.elemSize()];
 		
-		for(int i = 0; i < dstNorm.cols(); i++)
-			for(int j = 0; j < dstNorm.rows(); j++ )
+		for(int i = 0; i < dst.cols(); i++)
+			for(int j = 0; j < dst.rows(); j++ )
 			{
-				double[] points = dstNorm.get(j, i);
-				int p = (int) points[0];
-				//if(dstNorm.get(j,i,data) > 200)
-				if(p > 200)
-				{
-					Imgproc.circle(dstNormScaled, new Point(i,j), 3, new Scalar(255,0,255));
-				}
+				//double[] points = dstNorm.get(j, i);
+				//int p = (int) points[0];
+				double [] p = dst.get(i,j);
+				//System.out.println(p);
+				
+				//if(dst.get(i, j) > )
+			//	if(p > 200)
+				//{
+					
+					//Imgproc.circle(originalImage, new Point(i,j), 3, new Scalar(255,0,0));
+				//}
 				
 			}		
 		
 		
-		return dstNormScaled;
+		return originalImage;
 		
+	}
+	
+	
+	public Mat getTcorners(Mat inImage, Mat originalImage){
+		
+		MatOfPoint corners = new MatOfPoint();
+		Mat gray = new Mat();
+		Mat param = new Mat();
+		double qLevel = 0.01;
+		double minDist = 10;
+		int blockSize = 3;
+		boolean  useHarris = false;
+		double k = 0.04;
+		
+		
+		Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);
+		
+		Imgproc.goodFeaturesToTrack(gray, corners, 23, qLevel, minDist,param,blockSize,useHarris,k);
+		
+		Point [] points = corners.toArray();
+		
+		for(int i = 0; i < points.length;i++){
+			Imgproc.circle(originalImage,points[i], 3, new Scalar(255,0,0));
+		}
+		
+		
+		
+		return originalImage;
 	}
 	
 	
