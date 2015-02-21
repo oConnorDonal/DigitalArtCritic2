@@ -21,6 +21,13 @@ public class Line {
 		
 	}
 	
+	public Line(Point pt1, Point pt2){
+		
+		this.pt1 = pt1;
+		this.pt2 = pt2;			
+		
+	}
+	
 	public double getDY(){
 		
 		double dy = pt2.y - pt1.y;
@@ -31,7 +38,7 @@ public class Line {
 	
 	public double getDX(){
 		
-		double dx = pt2.x - pt1.x;
+		double dx = pt1.x - pt2.x;
 		return dx; 
 		
 	}

@@ -77,7 +77,7 @@ public class MainController {
 		 BufferedImage image = ImageIO.read(file);		*/
 		
 		try {
-			image = ImageIO.read( new File("src/application/chess.jpg"));
+			image = ImageIO.read( new File("src/application/myIBox.jpg"));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -92,14 +92,14 @@ public class MainController {
 		 
 		 //BufferedImage image1 = matToBinBuff(toThresh(buffToMat(image)));
 		
-		printIntersection();
+		
 		 
 		
 		
-		//BufferedImage image1 = format.matToBuffColour(  showLines( toCanny((format.buffToMat(image)) ) ,format.buffToMat(image) ))   ;
+		BufferedImage image1 = format.matToBuffColour(  showLineSegments( toCanny((format.buffToMat(image)) ) ,format.buffToMat(image) ))   ;
 		// BufferedImage image1 = format.matToBinBuff(showLines( format.toThresh(format.buffToMat(image)),format.buffToMat(image)));
 		//BufferedImage image1 = format.matToBuff(toCanny(format.buffToMat(image)));
-		BufferedImage image1 = format.matToBuff(getTcorners(format.buffToMat(image),format.buffToMat(image))); 
+		//BufferedImage image1 = format.matToBuff(getTcorners(format.buffToMat(image),format.buffToMat(image))); 
 		//BufferedImage image1 = matToBinBuff(toThresh(buffToMat(image)));
 		 
 		Image original = SwingFXUtils.toFXImage(image, null);	
@@ -123,15 +123,28 @@ public class MainController {
 		Mat edges = new Mat();
 		Mat smoothedImage = new Mat();
 		Mat gray = new Mat();
-		Mat sobel = new Mat();
+		Mat gray2 = new Mat();
+		Mat gray3 = new Mat();
+		Mat gray4 = new Mat();
+		Mat gray5 = new Mat();
+		Mat gray6 = new Mat();
+		//Mat gray7 = new Mat();
+		//Mat gray8 = new Mat();*/
+		//Mat sobel = new Mat();
 		
 		//Imgproc.GaussianBlur(gray, smoothedImage, new Size(3,3), 0);
 		Imgproc.cvtColor(inImage, gray, Imgproc.COLOR_BGR2GRAY);
 		Imgproc.blur(gray, smoothedImage, new Size(3, 3));
-			
+		Imgproc.blur(smoothedImage, gray2, new Size(3, 3));
+		Imgproc.blur(gray2, gray3, new Size(3, 3));
+		Imgproc.blur(gray3, gray4, new Size(3, 3));
+		Imgproc.blur(gray4, gray5, new Size(3, 3));
+		Imgproc.blur(gray5, gray6, new Size(3, 3));
+		//Imgproc.blur(gray6, gray7, new Size(3, 3));
+		//Imgproc.blur(gray7, gray8, new Size(3, 3));*/
 		
 		//Mat thresh = format.toThresh(gray);
-		Imgproc.Canny(smoothedImage, edges, lowThreshold, lowThreshold * ratio,7,false);	
+		Imgproc.Canny(gray6, edges, lowThreshold, lowThreshold * ratio);	
 		
 		
 		//Imgproc.Sobel(edges, sobel, edges.depth(), 0, 1);
@@ -178,37 +191,124 @@ public class MainController {
 
 	
 	public Mat showLineSegments(Mat image, Mat originalImage){
-		
-		//System.out.println("lines");
 
 		
 		Mat lines = new Mat();	
 		
-		//Mat newLines = Converters.vector_Point2d_to_Mat(pts);
+		List <Line> pLines = new ArrayList();
+		int count = 0;
 		
-		Imgproc.HoughLinesP(image, lines, 1, Math.PI/180,50,0,100);
-		//Imgproc.HoughLines(image, lines, Math.PI/180, 10,0);
+		Imgproc.HoughLinesP(image, lines, 1, Math.PI/180,25,30,10);		
 		
 		
-		
-		for(int i = 0; i < lines.rows(); i++){
+		for(int i = 0; i < lines.rows(); i++)
+		{			
 			double [] val  = lines.get(i,0);
+			Point pt1 = new Point();
+			Point pt2 = new Point();
 			
-			double dx = (val[0] - val[2]);
-			double dy =  (val[1] - val[3]); 
+			pt1.x = val[0];
+			pt1.y = val[1];
 			
-			if (dx != 0 )	
-			{	
-			double slope = dy / dx ;
-			//System.out.println(m);
-				
-				if(slope != 0)
-				{
-					Imgproc.line(originalImage, new Point(val[0], val[1]), new Point(val[2], val[3]), new Scalar(0, 255,0 ), 2);
+			pt2.x = val[2];
+			pt2.y = val[3];	
+			
+			Line temp = new Line(pt1,pt2);
+			
+			if(temp.getSlope() != 0)
+				if(temp.getDX() != 0)
+				{			
+					pLines.add(temp);	
 				}
-			}
 		}
 		
+		for(int j = 0; j < pLines.size();j++)
+		{
+			
+			//for(int k = 0; k < pLines.size();k++)
+			//{
+				//if(pLines.get(j).pt1.x == pLines.get(k).pt1.x )
+				//{
+			
+			//Imgproc.circle(originalImage, pLines.get(j).pt1, 5, new Scalar(0,0,255),0 );
+				//System.out.println(pLines.get(j).pt1.x );
+				//System.out.println(pLines.get(k).pt1.x);
+				//}
+			//}
+		}
+		 for (int z = 0; z < pLines.size(); z++)
+		 {
+			 for(int y = 0; y < pLines.size(); y++)
+			 {
+				double distance = Math.sqrt( (pLines.get(z).pt1.y - pLines.get(y).pt1.y ) * (pLines.get(z).pt1.y - pLines.get(y).pt1.y )
+								  + (pLines.get(z).pt1.x - pLines.get(y).pt1.x) * (pLines.get(z).pt1.x - pLines.get(y).pt1.x)  );
+				
+				System.out.println(distance);
+				if(distance != 0)
+					if(distance < 25)
+					{
+						pLines.remove(z);
+					}
+			 }
+		 }
+		
+		
+		
+		
+		for(int x = 0; x < pLines.size(); x++){
+			//for (int y = 0; y < pLines.size(); y++)
+			//{
+				
+				/*double midPtLine1x = (pLines.get(j).pt1.x + pLines.get(k).pt1.x)/2;
+				double midPtLine1y = (pLines.get(j).pt1.y + pLines.get(k).pt1.y)/2;
+					
+				double midPtLine2x = (pLines.get(j).pt2.x + pLines.get(k).pt2.x)/2;
+				double midPtLine2y = (pLines.get(j).pt2.y + pLines.get(k).pt2.y)/2;
+					*/
+				//Imgproc.line(originalImage, new Point(midPtLine1x,midPtLine1y),new Point(midPtLine2x,midPtLine2y), new Scalar(0, 255,0 ), 0);
+				
+				
+				
+				//if((pLines.get(j).pt1 != pLines.get(k).pt1) && (pLines.get(j).pt2 != pLines.get(k).pt2))
+				
+				//{
+				//	if(!isNear(pLines.get(j).pt1, pLines.get(k).pt1)){
+						
+						Imgproc.line(originalImage, pLines.get(x).pt1,pLines.get(x).pt2, new Scalar(0, 255,0 ), 2);
+						
+					//}
+					
+					
+				//}
+			
+			//}
+		}
+		
+		
+		
+		for(int k = 0; k < pLines.size()-1; k ++)
+		{	
+			for(int l = 0; l < pLines.size(); l++)
+			{
+		
+				double A1 = pLines.get(k).getDY();
+				double B1 = pLines.get(k).getDX();
+				double C1 = ( A1 * pLines.get(k).pt1.x) + (B1 * pLines.get(k).pt1.y);					
+				
+				double A2 = pLines.get(k+1).getDY();
+				double B2 = pLines.get(k+1).getDX();
+				double C2= ( A2 * pLines.get(k+1).pt1.x) + (B2 * pLines.get(k+1).pt1.y);				
+								
+				double det  = (A1 * B2) - (A2 * B1);				
+				double xIntersectionPoint = (B2 * C1 - B1 * C2)/det;
+				double yIntersectionPoint = (A1 * C2 - A2 * C1)/det;			
+				
+				
+				Imgproc.circle(originalImage, new Point(xIntersectionPoint,yIntersectionPoint), 5, new Scalar(0,0,255),2 );
+			
+		
+			}	
+		}
 		return originalImage;
 		
 	}
@@ -218,7 +318,7 @@ public class MainController {
 		
 		Mat matLines = new Mat();
 		
-		Imgproc.HoughLines(image, matLines,2, (5 * Math.PI)/180,100);		
+		Imgproc.HoughLines(image, matLines,3,5 *(Math.PI)/180,25);		
 		
 		
 		List <Line> lines = new ArrayList();
@@ -230,14 +330,18 @@ public class MainController {
 		double oldTheta = 0;
 		
 		
-		for(int i = 0; i < matLines.rows(); i++)
+		for(int i = 0; i < matLines.cols(); i++)
 		{
-			
+			for (int j = 0; j < matLines.rows(); j++) 
+			{
 			Point pt1 = new Point();
 			Point pt2 = new Point();
-			double val [] = matLines.get(i, 0);					
+			double val [] = matLines.get(j, i);	
+			
 			double rho = val [0];
 			double theta = val [1];
+			System.out.println(val[0]);
+			
 			
 			double a = Math.cos(theta);
 			double b = Math.sin(theta);
@@ -267,17 +371,8 @@ public class MainController {
 			
 			
 		}
+	}
 			
-			//function here to draw line
-			
-			//if(dx != 0)//check if vertical
-			
-			/*if(lines.get(i).getSlope() != 0)
-			{	
-				if(lines.get(i).getDX() != 0)
-				Imgproc.line(originalImage, pt1, pt2, new Scalar(0, 255,0 ), 1);	
-			}
-			*/
 			
 
 			
@@ -368,6 +463,7 @@ public class MainController {
 			//lines.get(i).scale(1000);
 			//Imgproc.line(originalImage, slines.get(i).pt1, slines.get(i).pt2, new Scalar(0, 255,0 ), 1);	
 		}
+		
 		return originalImage;
 	
 
@@ -427,7 +523,7 @@ public class MainController {
 		
 		double b =  pt2.y- (m *pt2.x) ;
 		
-		System.out.println(b);
+		//System.out.println(b);
 	}
 	
 	public boolean isSimilar(double val1,double val2, double range){
@@ -440,29 +536,32 @@ public class MainController {
 		
 		Mat gray  = new Mat();
 		//Mat outImage = new Mat();
-		Mat dst = new Mat();
+		
+		Mat dst = Mat.zeros(inImage.size(),CvType.CV_32FC1);	
+		
 		Mat dstNorm = new Mat();
 		Mat mask = new Mat();
 		Mat dstNormScaled = new Mat();
 		
-		Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);
-		//Imgproc.g
+		Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);		
 		
-		//Imgproc.cornerHarris(gray, dst, 2, 3, Core.BORDER_DEFAULT);
-		//Core.normalize(dst, dstNorm,0,255,Core.NORM_MINMAX,CvType.CV_32FC1,mask);
+		Imgproc.cornerHarris(gray, dst, 2, 3, Core.BORDER_DEFAULT);
+		Core.normalize(dst, dstNorm,0,255,Core.NORM_MINMAX,CvType.CV_32FC1,mask);
 		//Core.convertScaleAbs(dstNorm, dstNormScaled);
 		
-		float [] data = new float [dstNorm.rows() * dstNorm.cols() * (int) dstNorm.elemSize()];
+		//dstNorm.
 		
-		for(int i = 0; i < dst.cols(); i++)
-			for(int j = 0; j < dst.rows(); j++ )
+		for(int i = 0; i < dstNorm.rows(); i++)
+			for(int j = 0; j < dstNorm.cols(); j++ )
 			{
+				//if(dstNorm)
 				//double[] points = dstNorm.get(j, i);
 				//int p = (int) points[0];
-				double [] p = dst.get(i,j);
+				//double [] p = dst.get(i,j);
 				//System.out.println(p);
 				
-				//if(dst.get(i, j) > )
+				
+				//if(dstNorm.g > 200)
 			//	if(p > 200)
 				//{
 					
@@ -503,6 +602,30 @@ public class MainController {
 		
 		return originalImage;
 	}
+	
+	public static double toRadians(float inFloat){
+		
+		return inFloat *  Math.PI/180.0f;
+		
+	}
+	
+	public boolean isEqualPoint(Point pt1,Point pt2){		
+		
+		return pt1.equals(pt2);
+		
+	}
+	
+	public boolean isNear(Point pt1, Point pt2){
+		
+		double range = 3;
+		
+		return pt2.x <= pt1.x + range && pt2.x <= pt1.x - range && pt2.y <= pt1.y - range && pt2.y <= pt1.y + range;
+		
+	}		
+		
+		
+		
+		
 	
 	
 	
