@@ -63,6 +63,8 @@ public class MainController {
 	
 	Core core = new Core();
 	Format format = new Format();
+	Filter filter = new Filter();
+	
 	
 	BufferedImage image = null;
 	
@@ -77,34 +79,23 @@ public class MainController {
 		 BufferedImage image = ImageIO.read(file);		*/
 		
 		try {
-			image = ImageIO.read( new File("src/application/myIBox.jpg"));
+			image = ImageIO.read( new File("src/application/house.jpg"));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-		
-		
-		
-			
+		}			
 		
 		 
-		 //BufferedImage image1 = matToBuff(toCanny(buffToMat(image)));
-		 
-		 //BufferedImage image1 = matToBinBuff(toThresh(buffToMat(image)));
-		
-		
-		 
-		
-		
-		BufferedImage image1 = format.matToBuffColour(  showLineSegments( toCanny((format.buffToMat(image)) ) ,format.buffToMat(image) ))   ;
+		 //BufferedImage image1 = matToBuff(toCanny(buffToMat(image)));		 
+		 //BufferedImage image1 = matToBinBuff(toThresh(buffToMat(image)));		
+		BufferedImage image1 = format.matToBuffColour(  showLineSegments( filter.toCanny((format.buffToMat(image)) ) ,format.buffToMat(image) ))   ;
 		// BufferedImage image1 = format.matToBinBuff(showLines( format.toThresh(format.buffToMat(image)),format.buffToMat(image)));
 		//BufferedImage image1 = format.matToBuff(toCanny(format.buffToMat(image)));
 		//BufferedImage image1 = format.matToBuff(getTcorners(format.buffToMat(image),format.buffToMat(image))); 
 		//BufferedImage image1 = matToBinBuff(toThresh(buffToMat(image)));
 		 
 		Image original = SwingFXUtils.toFXImage(image, null);	
-		Image convertedImage = SwingFXUtils.toFXImage(image1, null);
-		 
+		Image convertedImage = SwingFXUtils.toFXImage(image1, null);		 
 			
 		smallImage.setImage(original);
 		bigImage.setImage(convertedImage);
@@ -112,94 +103,20 @@ public class MainController {
 
 	    }
 	
-	public Mat toCanny(Mat inImage){
-		
-		//System.out.println("canny");
-
-		
-		int lowThreshold = 5;
-		int ratio = 3;
-		
-		Mat edges = new Mat();
-		Mat smoothedImage = new Mat();
-		Mat gray = new Mat();
-		Mat gray2 = new Mat();
-		Mat gray3 = new Mat();
-		Mat gray4 = new Mat();
-		Mat gray5 = new Mat();
-		Mat gray6 = new Mat();
-		//Mat gray7 = new Mat();
-		//Mat gray8 = new Mat();*/
-		//Mat sobel = new Mat();
-		
-		//Imgproc.GaussianBlur(gray, smoothedImage, new Size(3,3), 0);
-		Imgproc.cvtColor(inImage, gray, Imgproc.COLOR_BGR2GRAY);
-		Imgproc.blur(gray, smoothedImage, new Size(3, 3));
-		Imgproc.blur(smoothedImage, gray2, new Size(3, 3));
-		Imgproc.blur(gray2, gray3, new Size(3, 3));
-		Imgproc.blur(gray3, gray4, new Size(3, 3));
-		Imgproc.blur(gray4, gray5, new Size(3, 3));
-		Imgproc.blur(gray5, gray6, new Size(3, 3));
-		//Imgproc.blur(gray6, gray7, new Size(3, 3));
-		//Imgproc.blur(gray7, gray8, new Size(3, 3));*/
-		
-		//Mat thresh = format.toThresh(gray);
-		Imgproc.Canny(gray6, edges, lowThreshold, lowThreshold * ratio);	
-		
-		
-		//Imgproc.Sobel(edges, sobel, edges.depth(), 0, 1);
-		
-		return edges;
-		
-	}
-	
-	public Mat toSobel(Mat inImage){
-		
-		Mat dst = new Mat();
-		Mat gray = new Mat();
-		Imgproc.cvtColor(inImage, gray, Imgproc.COLOR_BGR2GRAY);	
-		Imgproc.Sobel(gray, dst, CvType.CV_16S, 1, 0);
-		
-		/*Mat kernel = new Mat(9,9,CvType.CV_32F)
-		{
-			{	
-				put(0,0,-1);
-				put(0,1,0);
-				put(0,2,1);
-				
-				put(1,0,-2);
-				put(1,1,0);
-				put(1,2,2);
-				
-				put(2,0,-1);
-				put(2,1,0);
-				put(2,2,1);
-			}
-		};
-		
-		Imgproc.filter2D(gray, dst, -1, kernel);
-		*/
-		
-		return dst;
-	}
 	
 	
 	
-	
-	
-	
-
 	
 	public Mat showLineSegments(Mat image, Mat originalImage){
 
 		
-		Mat lines = new Mat();	
-		
+		Mat lines = new Mat();			
 		List <Line> pLines = new ArrayList();
-		int count = 0;
+		List <Line> mLines = new ArrayList();
+		List <Point> points = new ArrayList(); 
+		List <Double> diffs = new ArrayList();
 		
-		Imgproc.HoughLinesP(image, lines, 1, Math.PI/180,25,30,10);		
-		
+		Imgproc.HoughLinesP(image, lines, 1, Math.PI/180,50,50,10);				
 		
 		for(int i = 0; i < lines.rows(); i++)
 		{			
@@ -213,105 +130,60 @@ public class MainController {
 			pt2.x = val[2];
 			pt2.y = val[3];	
 			
-			Line temp = new Line(pt1,pt2);
+			Line temp = new Line(pt1,pt2);			
 			
 			if(temp.getSlope() != 0)
 				if(temp.getDX() != 0)
 				{			
-					pLines.add(temp);	
+					pLines.add(temp);						
 				}
 		}
 		
-		for(int j = 0; j < pLines.size();j++)
+		for(int j = 0; j < pLines.size(); j++)
 		{
-			
-			//for(int k = 0; k < pLines.size();k++)
-			//{
-				//if(pLines.get(j).pt1.x == pLines.get(k).pt1.x )
-				//{
-			
-			//Imgproc.circle(originalImage, pLines.get(j).pt1, 5, new Scalar(0,0,255),0 );
-				//System.out.println(pLines.get(j).pt1.x );
-				//System.out.println(pLines.get(k).pt1.x);
-				//}
-			//}
-		}
-		 for (int z = 0; z < pLines.size(); z++)
-		 {
-			 for(int y = 0; y < pLines.size(); y++)
-			 {
-				double distance = Math.sqrt( (pLines.get(z).pt1.y - pLines.get(y).pt1.y ) * (pLines.get(z).pt1.y - pLines.get(y).pt1.y )
-								  + (pLines.get(z).pt1.x - pLines.get(y).pt1.x) * (pLines.get(z).pt1.x - pLines.get(y).pt1.x)  );
-				
-				System.out.println(distance);
-				if(distance != 0)
-					if(distance < 25)
-					{
-						pLines.remove(z);
-					}
-			 }
-		 }
-		
-		
-		
-		
-		for(int x = 0; x < pLines.size(); x++){
-			//for (int y = 0; y < pLines.size(); y++)
-			//{
-				
-				/*double midPtLine1x = (pLines.get(j).pt1.x + pLines.get(k).pt1.x)/2;
-				double midPtLine1y = (pLines.get(j).pt1.y + pLines.get(k).pt1.y)/2;
-					
-				double midPtLine2x = (pLines.get(j).pt2.x + pLines.get(k).pt2.x)/2;
-				double midPtLine2y = (pLines.get(j).pt2.y + pLines.get(k).pt2.y)/2;
-					*/
-				//Imgproc.line(originalImage, new Point(midPtLine1x,midPtLine1y),new Point(midPtLine2x,midPtLine2y), new Scalar(0, 255,0 ), 0);
-				
-				
-				
-				//if((pLines.get(j).pt1 != pLines.get(k).pt1) && (pLines.get(j).pt2 != pLines.get(k).pt2))
-				
-				//{
-				//	if(!isNear(pLines.get(j).pt1, pLines.get(k).pt1)){
-						
-						Imgproc.line(originalImage, pLines.get(x).pt1,pLines.get(x).pt2, new Scalar(0, 255,0 ), 2);
-						
-					//}
-					
-					
-				//}
-			
-			//}
-		}
-		
-		
-		
-		for(int k = 0; k < pLines.size()-1; k ++)
-		{	
-			for(int l = 0; l < pLines.size(); l++)
+			for(int k = 1 ; k < pLines.size(); k++)
 			{
-		
-				double A1 = pLines.get(k).getDY();
-				double B1 = pLines.get(k).getDX();
-				double C1 = ( A1 * pLines.get(k).pt1.x) + (B1 * pLines.get(k).pt1.y);					
-				
-				double A2 = pLines.get(k+1).getDY();
-				double B2 = pLines.get(k+1).getDX();
-				double C2= ( A2 * pLines.get(k+1).pt1.x) + (B2 * pLines.get(k+1).pt1.y);				
-								
-				double det  = (A1 * B2) - (A2 * B1);				
-				double xIntersectionPoint = (B2 * C1 - B1 * C2)/det;
-				double yIntersectionPoint = (A1 * C2 - A2 * C1)/det;			
-				
-				
-				Imgproc.circle(originalImage, new Point(xIntersectionPoint,yIntersectionPoint), 5, new Scalar(0,0,255),2 );
-			
-		
-			}	
+				if(j != k)					
+				if(Line.isNear(pLines.get(j), pLines.get(k)))
+				{
+					Line temp = Line.getMidLinePoints(pLines.get(j), pLines.get(k));
+					mLines.add(temp);					
+				}
+			}
 		}
+		for (int m = 0; m < mLines.size();m++)
+		{
+			for(int n = 1; n < mLines.size(); n++)
+			{
+				Imgproc.line(originalImage, mLines.get(m).pt1, mLines.get(m).pt2, new Scalar(0, 255,0 ),2);	
+				Point tempP = Line.getIntersectionPoints(mLines.get(m), pLines.get(n));
+				points.add(tempP);
+				Imgproc.circle(originalImage, tempP, 5, new Scalar(0,0,255),-1);
+			}
+		}
+		for (int x = 0; x < mLines.size();x++)
+		{
+			for(int y = 0; y < points.size(); y++)
+			{
+				double difference = Line.getProximity(mLines.get(x).pt1, points.get(y));
+				diffs.add(difference);
+			}
+		}
+		for (int z = 0; z < diffs.size(); z++){
+			
+			double maxVal = diffs.indexOf(Collections.max(diffs));
+			
+			if(diffs.get(z) > (maxVal/2))
+			{
+				//do something
+			}
+		}
+		
 		return originalImage;
 		
 	}
+	
+	
 	
 	
 	public Mat showLines(Mat image,Mat originalImage){
@@ -615,13 +487,7 @@ public class MainController {
 		
 	}
 	
-	public boolean isNear(Point pt1, Point pt2){
-		
-		double range = 3;
-		
-		return pt2.x <= pt1.x + range && pt2.x <= pt1.x - range && pt2.y <= pt1.y - range && pt2.y <= pt1.y + range;
-		
-	}		
+	
 		
 		
 		
