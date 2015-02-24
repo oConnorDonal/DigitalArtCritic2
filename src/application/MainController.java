@@ -6,8 +6,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.Vector;
 
 import org.opencv.core.Size;
@@ -23,11 +26,13 @@ import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.utils.Converters;
 
+import com.sun.javafx.geom.Line2D;
 import com.sun.javafx.geom.Vec2d;
 
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Point2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -87,11 +92,17 @@ public class MainController {
 		
 		 
 		 //BufferedImage image1 = matToBuff(toCanny(buffToMat(image)));		 
-		 //BufferedImage image1 = matToBinBuff(toThresh(buffToMat(image)));		
-		BufferedImage image1 = format.matToBuffColour(  showLineSegments( filter.toCanny((format.buffToMat(image)) ) ,format.buffToMat(image) ))   ;
+		 //BufferedImage image1 = matToBinBuff(toThresh(buffToMat(image)));
+		
+		BufferedImage image1 = format.matToBuffColour(  showLineSegments( filter.toCanny((format.buffToMat(image)) ) ,format.buffToMat(image) ))  ;
+		
 		// BufferedImage image1 = format.matToBinBuff(showLines( format.toThresh(format.buffToMat(image)),format.buffToMat(image)));
 		//BufferedImage image1 = format.matToBuff(toCanny(format.buffToMat(image)));
-		//BufferedImage image1 = format.matToBuff(getTcorners(format.buffToMat(image),format.buffToMat(image))); 
+		
+		
+		//BufferedImage image1 = format.matToBuffColour(getTcorners(format.buffToMat(image),format.buffToMat(image))); 
+		
+		
 		//BufferedImage image1 = matToBinBuff(toThresh(buffToMat(image)));
 		 
 		Image original = SwingFXUtils.toFXImage(image, null);	
@@ -111,12 +122,15 @@ public class MainController {
 
 		
 		Mat lines = new Mat();			
-		List <Line> pLines = new ArrayList();
-		List <Line> mLines = new ArrayList();
-		List <Point> points = new ArrayList(); 
-		List <Double> diffs = new ArrayList();
+		List <Line> pLines = new ArrayList<Line>();
+		List <Line> mLines = new ArrayList<Line>();	
+		List <Line> verticalLines = new ArrayList<Line>();
+		List <Line> correctLines = new ArrayList<Line>();
+		List<Point> intersectionPoints = new ArrayList();
 		
-		Imgproc.HoughLinesP(image, lines, 1, Math.PI/180,50,50,10);				
+		TreeMap<Double, Point> mappedPoints = new TreeMap<Double, Point>();		
+		
+		Imgproc.HoughLinesP(image, lines, 1, Math.PI/180,100,50,10);				
 		
 		for(int i = 0; i < lines.rows(); i++)
 		{			
@@ -132,52 +146,78 @@ public class MainController {
 			
 			Line temp = new Line(pt1,pt2);			
 			
-			if(temp.getSlope() != 0)
+			if(temp.getSlope() != 0)				
 				if(temp.getDX() != 0)
-				{			
+				{						
 					pLines.add(temp);						
+				}
+				else
+				{
+					verticalLines.add(temp);
 				}
 		}
 		
-		for(int j = 0; j < pLines.size(); j++)
+		for(int i = 0; i < pLines.size(); i++)
 		{
-			for(int k = 1 ; k < pLines.size(); k++)
+			for(int j = i+1 ;j < pLines.size(); j++)
 			{
-				if(j != k)					
-				if(Line.isNear(pLines.get(j), pLines.get(k)))
-				{
-					Line temp = Line.getMidLinePoints(pLines.get(j), pLines.get(k));
+				if(pLines.get(i).isNear(pLines.get(j)))
+				{					
+					Line temp = pLines.get(i).getMidLinePoints(pLines.get(j));
+					//System.out.println("temp "+temp.toString());
 					mLines.add(temp);					
 				}
 			}
 		}
 		for (int m = 0; m < mLines.size();m++)
 		{
-			for(int n = 1; n < mLines.size(); n++)
-			{
-				Imgproc.line(originalImage, mLines.get(m).pt1, mLines.get(m).pt2, new Scalar(0, 255,0 ),2);	
-				Point tempP = Line.getIntersectionPoints(mLines.get(m), pLines.get(n));
-				points.add(tempP);
-				Imgproc.circle(originalImage, tempP, 5, new Scalar(0,0,255),-1);
+			//System.out.println("draw "+mLines.get(m).toString());
+			Imgproc.line(originalImage, mLines.get(m).pt1, mLines.get(m).pt2, new Scalar(0, 255,0 ),2);	
+			
+			for(int n = m+1; n < mLines.size(); n++)
+			{		
+					Point tempP = mLines.get(m).getIntersectionPoint(mLines.get(n));
+					double dist = mLines.get(m).getProximity(tempP);
+					//Imgproc.circle(originalImage, tempP, 5, new Scalar(0,0,255),1);		
+					mappedPoints.put(dist, tempP);								
 			}
-		}
-		for (int x = 0; x < mLines.size();x++)
+		}		
+		
+		Point p = mappedPoints.firstEntry().getValue();			
+		
+		for(int i = 0; i < mLines.size();i++){
+			
+			
+			if(mLines.get(i).isPointOnLine(p))
+			{
+				Imgproc.line(originalImage, mLines.get(i).pt1, mLines.get(i).pt2, new Scalar(255, 0,0 ),2);							
+			}			
+			Line correctLine = new Line(mLines.get(i).pt1,p);	
+			correctLines.add(correctLine);
+		}		
+		
+		Imgproc.circle(originalImage, p, 5, new Scalar(0,0,255),1);			
+		
+		for (int i = 0; i < correctLines.size();i++)
 		{
-			for(int y = 0; y < points.size(); y++)
-			{
-				double difference = Line.getProximity(mLines.get(x).pt1, points.get(y));
-				diffs.add(difference);
+			for(int j = i+1; j < verticalLines.size(); j++)
+			{		
+					Point temp = correctLines.get(i).getIntersectionPoint(verticalLines.get(j));
+					Point dist = new Point();
+					//get all intersection points, the nearest one to the pt1 of correct line is the point to use.
+					//If distance of temp is larger than the old temp, keep the smaller one
+					//if(temp.getDistance > correctLines.get(i).pt1)
+					Imgproc.circle(originalImage, temp, 5, new Scalar(0,0,255),1);	
+					intersectionPoints.add(temp);	
+					
 			}
-		}
-		for (int z = 0; z < diffs.size(); z++){
+		}	
+		
+		
+		
+		
+		
 			
-			double maxVal = diffs.indexOf(Collections.max(diffs));
-			
-			if(diffs.get(z) > (maxVal/2))
-			{
-				//do something
-			}
-		}
 		
 		return originalImage;
 		
@@ -190,12 +230,11 @@ public class MainController {
 		
 		Mat matLines = new Mat();
 		
-		Imgproc.HoughLines(image, matLines,3,5 *(Math.PI)/180,25);		
+		Imgproc.HoughLines(image, matLines,3,5 *(Math.PI)/180,25);			
 		
-		
-		List <Line> lines = new ArrayList();
-		List <Line> slines = new ArrayList();
-		List <Integer> linesToRemove = new ArrayList();
+		List <Line> lines = new ArrayList<Line>();
+		List <Line> slines = new ArrayList<Line>();
+		List <Integer> linesToRemove = new ArrayList<Integer>();
 		
 		int count = 0;
 		double oldRho = 0;
@@ -418,6 +457,7 @@ public class MainController {
 		Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);		
 		
 		Imgproc.cornerHarris(gray, dst, 2, 3, Core.BORDER_DEFAULT);
+		//Imgproc.cornerEigenValsAndVecs(gray, dstNormScaled, 3, 1);
 		Core.normalize(dst, dstNorm,0,255,Core.NORM_MINMAX,CvType.CV_32FC1,mask);
 		//Core.convertScaleAbs(dstNorm, dstNormScaled);
 		
@@ -453,21 +493,23 @@ public class MainController {
 		MatOfPoint corners = new MatOfPoint();
 		Mat gray = new Mat();
 		Mat param = new Mat();
-		double qLevel = 0.01;
-		double minDist = 10;
+		double qLevel = 0.1;
+		double minDist = 1;
 		int blockSize = 3;
-		boolean  useHarris = false;
+		boolean  useHarris = true;
 		double k = 0.04;
 		
 		
 		Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);
 		
-		Imgproc.goodFeaturesToTrack(gray, corners, 23, qLevel, minDist,param,blockSize,useHarris,k);
+		Imgproc.goodFeaturesToTrack(gray, corners, 50, qLevel, minDist,param,blockSize,useHarris,k);
+		//Imgproc.goodFeaturesToTrack(image, corners, maxCorners, qualityLevel, minDistance, mask, blockSize, useHarrisDetector, k);
+		//Imgproc.goodFeaturesToTrack(gray, corners, blockSize, qLevel, minDist);
 		
 		Point [] points = corners.toArray();
 		
 		for(int i = 0; i < points.length;i++){
-			Imgproc.circle(originalImage,points[i], 3, new Scalar(255,0,0));
+			Imgproc.circle(originalImage,points[i], 3, new Scalar(0,255,0),-1);
 		}
 		
 		

@@ -1,5 +1,7 @@
 package application;
 
+import java.awt.geom.Line2D;
+
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
@@ -55,32 +57,48 @@ public class Line {
 		this.pt2.y = this.pt2.y * f;
 	}
 	
-	public static double getProximity (Point pt1,Point pt2){
+	public String toString() {
+		return "x1: " + pt1.x + " y1: " + pt1.y + " x2: " + pt2.x + " y2: " + pt2.y;
+	}
+	
+	public double getProximity (Line l){
 		
-		 double distance = Math.sqrt(pt2.x - pt1.x) * (pt2.x - pt1.x)
-				 			+ (pt2.y - pt1.y) *  (pt2.y - pt1.y);
+		double distancePoint1 = Math.sqrt((pt1.x - l.pt1.x) * (pt1.x - l.pt1.x) +
+										  (pt1.y - l.pt1.y) * (pt1.y - l.pt1.y));
+
+		double distancePoint2 = Math.sqrt((pt2.x - l.pt2.x) * (pt2.x - l.pt2.x) +
+										  (pt2.y - l.pt2.y) * (pt2.y - l.pt2.y));
 		 
-		 //System.out.println(Math.abs(distance));
-				 
-		 return distance;				
+		 return Math.min(distancePoint1, distancePoint2);				
 		
 	}
 	
-	public static  boolean isNear(Line line1, Line line2){
+	public double getProximity (Point p){
 		
-		return getProximity(line1.pt1, line2.pt1) < 100;
+		return getProximity(new Line(p,p));
+	}
+	
+	public double getLength()
+	{
+		return Math.sqrt( ((pt2.x - pt1.x) * (pt2.x - pt1.x)) + ((pt2.y - pt1.y) * (pt2.y - pt1.y)) );
+	}
+	
+	
+	public boolean isNear(Line l){
+		
+		return getProximity(l) < 25;
 		
 	}
 	
-	public static Point getIntersectionPoints (Line line1, Line line2){
+	public Point getIntersectionPoint (Line l){
 		
-		double A1 = line1.getDY();
-		double B1 = line1.getDX();
-		double C1 = ( A1 * line1.pt1.x) + (B1 * line1.pt1.y);					
+		double A1 = getDY();
+		double B1 = getDX();
+		double C1 = ( A1 * pt1.x) + (B1 * pt1.y);					
 		
-		double A2 = line2.getDY();
-		double B2 = line2.getDX();
-		double C2= ( A2 * line2.pt1.x) + (B2 * line2.pt1.y);				
+		double A2 = l.getDY();
+		double B2 = l.getDX();
+		double C2= ( A2 * l.pt1.x) + (B2 * l.pt1.y);				
 						
 		double det  = (A1 * B2) - (A2 * B1);				
 		double xIntersectionPoint = (B2 * C1 - B1 * C2)/det;
@@ -90,16 +108,16 @@ public class Line {
 		
 	}
 	
-	public static Line getMidLinePoints(Line line1, Line line2)
+	public Line getMidLinePoints(Line l)
 	{			
 		
-		double firstMidXPoint = (line1.pt1.x + line2.pt1.x)/2;
-		double firstMidYPoint = (line1.pt1.y + line2.pt1.y)/2;
+		double firstMidXPoint = (pt1.x + l.pt1.x)/2;
+		double firstMidYPoint = (pt1.y + l.pt1.y)/2;
 		
 		Point firstMidPoint = new Point (firstMidXPoint,firstMidYPoint);
 		
-		double secondMidXPoint = (line1.pt2.x + line2.pt2.x)/2;
-		double secondMidYPoint = (line1.pt2.y + line2.pt2.y)/2;
+		double secondMidXPoint = (pt2.x + l.pt2.x)/2;
+		double secondMidYPoint = (pt2.y + l.pt2.y)/2;
 		
 		Point secondMidPoint = new Point (secondMidXPoint,secondMidYPoint);		
 		
@@ -107,8 +125,11 @@ public class Line {
 			
 	}
 	
-	
-	
+	public boolean isPointOnLine(Point p){
+		
+		return Line2D.ptLineDist(pt1.x, pt1.y, pt2.x, pt2.y, p.x, p.y) != 0;
+		
+	}
 	
 	
 	
