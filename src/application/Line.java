@@ -84,6 +84,7 @@ public class Line {
 	}
 	
 	
+	
 	public boolean isNear(Line l){
 		
 		return getProximity(l) < 25;

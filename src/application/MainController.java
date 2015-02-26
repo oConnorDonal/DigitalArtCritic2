@@ -20,10 +20,14 @@ import javax.imageio.ImageIO;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfRect;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.utils.Converters;
 
 import com.sun.javafx.geom.Line2D;
@@ -71,6 +75,8 @@ public class MainController {
 	Filter filter = new Filter();
 	
 	
+	
+	
 	BufferedImage image = null;
 	
 	
@@ -84,23 +90,25 @@ public class MainController {
 		 BufferedImage image = ImageIO.read(file);		*/
 		
 		try {
-			image = ImageIO.read( new File("src/application/house.jpg"));
+			image = ImageIO.read( new File("src/application/model.jpg"));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}			
 		
-		 
+		
 		 //BufferedImage image1 = matToBuff(toCanny(buffToMat(image)));		 
 		 //BufferedImage image1 = matToBinBuff(toThresh(buffToMat(image)));
 		
-		BufferedImage image1 = format.matToBuffColour(  showLineSegments( filter.toCanny((format.buffToMat(image)) ) ,format.buffToMat(image) ))  ;
+		//BufferedImage image1 = format.matToBuffColour(  showLineSegments( filter.toCanny((format.buffToMat(image)) ) ,format.buffToMat(image) ))  ;
 		
 		// BufferedImage image1 = format.matToBinBuff(showLines( format.toThresh(format.buffToMat(image)),format.buffToMat(image)));
 		//BufferedImage image1 = format.matToBuff(toCanny(format.buffToMat(image)));
 		
 		
 		//BufferedImage image1 = format.matToBuffColour(getTcorners(format.buffToMat(image),format.buffToMat(image))); 
+		
+		BufferedImage image1 = format.matToBuffColour(displayFaceFeatures(format.buffToMat(image))); 
 		
 		
 		//BufferedImage image1 = matToBinBuff(toThresh(buffToMat(image)));
@@ -128,7 +136,8 @@ public class MainController {
 		List <Line> correctLines = new ArrayList<Line>();
 		List<Point> intersectionPoints = new ArrayList();
 		
-		TreeMap<Double, Point> mappedPoints = new TreeMap<Double, Point>();		
+		TreeMap<Double, Point> mappedPoints = new TreeMap<Double, Point>();	
+		TreeMap<Double, Point> correctMappedPoints = new TreeMap<Double, Point>();	
 		
 		Imgproc.HoughLinesP(image, lines, 1, Math.PI/180,100,50,10);				
 		
@@ -202,20 +211,14 @@ public class MainController {
 		{
 			for(int j = i+1; j < verticalLines.size(); j++)
 			{		
-					Point temp = correctLines.get(i).getIntersectionPoint(verticalLines.get(j));
-					Point dist = new Point();
-					//get all intersection points, the nearest one to the pt1 of correct line is the point to use.
-					//If distance of temp is larger than the old temp, keep the smaller one
-					//if(temp.getDistance > correctLines.get(i).pt1)
-					Imgproc.circle(originalImage, temp, 5, new Scalar(0,0,255),1);	
-					intersectionPoints.add(temp);	
-					
+					Point temp = correctLines.get(i).getIntersectionPoint(verticalLines.get(j));					
+					double dist = getLength(temp, p);
+					correctMappedPoints.put(dist, temp);		
 			}
 		}	
 		
-		
-		
-		
+		Point cp = correctMappedPoints.firstEntry().getValue();
+		//Imgproc.line(originalImage, mLines.get(i).pt1, mLines.get(i).pt2, new Scalar(255, 0,0 ),2);
 		
 			
 		
@@ -446,42 +449,36 @@ public class MainController {
 	public Mat getCorners (Mat inImage, Mat originalImage){
 		
 		Mat gray  = new Mat();
-		//Mat outImage = new Mat();
-		
-		Mat dst = Mat.zeros(inImage.size(),CvType.CV_32FC1);	
-		
-		Mat dstNorm = new Mat();
+		Mat dst = new Mat();
+		dst = Mat.zeros(inImage.size(), CvType.CV_32FC1);
+		MatOfFloat dstNorm = new MatOfFloat();
 		Mat mask = new Mat();
 		Mat dstNormScaled = new Mat();
+		double thresh  = 200;
 		
-		Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);		
+		Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);			
+		Imgproc.cornerHarris(gray, dst, 2, 3, Core.BORDER_DEFAULT);	
 		
-		Imgproc.cornerHarris(gray, dst, 2, 3, Core.BORDER_DEFAULT);
-		//Imgproc.cornerEigenValsAndVecs(gray, dstNormScaled, 3, 1);
 		Core.normalize(dst, dstNorm,0,255,Core.NORM_MINMAX,CvType.CV_32FC1,mask);
-		//Core.convertScaleAbs(dstNorm, dstNormScaled);
+		Core.convertScaleAbs(dstNorm, dstNormScaled);
 		
-		//dstNorm.
+		byte [] data1 = new byte [dstNorm.rows() * dstNorm.cols() * (int)dstNorm.elemSize()];
 		
 		for(int i = 0; i < dstNorm.rows(); i++)
-			for(int j = 0; j < dstNorm.cols(); j++ )
+		{
+			for(int j = 0; j < dstNorm.cols(); j++)
 			{
-				//if(dstNorm)
-				//double[] points = dstNorm.get(j, i);
-				//int p = (int) points[0];
-				//double [] p = dst.get(i,j);
-				//System.out.println(p);
+				float temp = 0;
+				double [] vals = dstNorm.get(j, i);
+				//if((int) dstNorm.get(j, i, data1) > thresh)
+				vals[i] = temp;
 				
 				
-				//if(dstNorm.g > 200)
-			//	if(p > 200)
-				//{
-					
-					//Imgproc.circle(originalImage, new Point(i,j), 3, new Scalar(255,0,0));
-				//}
+					System.out.println(temp);
 				
-			}		
-		
+				
+			}
+		}
 		
 		return originalImage;
 		
@@ -494,7 +491,7 @@ public class MainController {
 		Mat gray = new Mat();
 		Mat param = new Mat();
 		double qLevel = 0.1;
-		double minDist = 1;
+		double minDist = 20;
 		int blockSize = 3;
 		boolean  useHarris = true;
 		double k = 0.04;
@@ -502,7 +499,7 @@ public class MainController {
 		
 		Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);
 		
-		Imgproc.goodFeaturesToTrack(gray, corners, 50, qLevel, minDist,param,blockSize,useHarris,k);
+		Imgproc.goodFeaturesToTrack(gray, corners, 25, qLevel, minDist,param,blockSize,useHarris,k);
 		//Imgproc.goodFeaturesToTrack(image, corners, maxCorners, qualityLevel, minDistance, mask, blockSize, useHarrisDetector, k);
 		//Imgproc.goodFeaturesToTrack(gray, corners, blockSize, qLevel, minDist);
 		
@@ -528,6 +525,60 @@ public class MainController {
 		return pt1.equals(pt2);
 		
 	}
+	public double getLength(Point pt1, Point pt2)
+	{
+		return Math.sqrt( ((pt2.x - pt1.x) * (pt2.x - pt1.x)) + ((pt2.y - pt1.y) * (pt2.y - pt1.y)) );
+	}
+	
+	
+	public Mat displayFaceFeatures(Mat inImage){
+		
+		Mat gray = new Mat();		
+		MatOfRect faceBoxes = new MatOfRect();
+		MatOfRect eyeBoxes = new MatOfRect();
+		
+		Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);
+		
+		String faceCascadeFile = "src/application/haarcascade_frontalface_default.xml";
+		String eyeCascadeFile = "src/application/haarcascade_eye.xml";
+		
+		CascadeClassifier faceCascade =  new CascadeClassifier(faceCascadeFile);				
+		CascadeClassifier eyeCascade =  new CascadeClassifier(eyeCascadeFile);
+
+		if(faceCascade.empty())
+		{
+			System.out.println("Cannot load the cascade xml file");
+		}
+		
+		faceCascade.detectMultiScale(gray, faceBoxes);
+		
+		
+		Rect[] faces = faceBoxes.toArray();
+		
+		
+		for(int i = 0; i < faces.length; i++){	
+			
+			Imgproc.rectangle(inImage, faces[i].tl(), faces[i].br(), new Scalar(0,0,255),3);			
+			
+			
+			Mat roi = new Mat(gray,faces[i]);			
+			eyeCascade.detectMultiScale(roi, eyeBoxes);
+			Rect[] eyes = eyeBoxes.toArray();
+			System.out.println(eyes.length);
+			for(int j = 0; j < eyes.length; j++)
+			{	
+			
+				Imgproc.rectangle(inImage, eyes[i].tl(), eyes[i].br(), new Scalar(255,0,0),2);			
+			
+			}
+			
+		
+		}
+		return inImage;
+		
+		
+	}
+	
 	
 	
 		
