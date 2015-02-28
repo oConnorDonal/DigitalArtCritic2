@@ -491,7 +491,7 @@ public class MainController {
 		//Mat gray = new Mat();
 		Mat param = new Mat();
 		double qLevel = 0.1;
-		double minDist = 20;
+		double minDist = 35;
 		int blockSize = 3;
 		boolean  useHarris = true;
 		double k = 0.04;
@@ -499,7 +499,7 @@ public class MainController {
 		
 		//Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);
 		
-		Imgproc.goodFeaturesToTrack(inImage, corners, 2, qLevel, minDist,param,blockSize,useHarris,k);
+		Imgproc.goodFeaturesToTrack(inImage, corners, 4, qLevel, minDist,param,blockSize,useHarris,k);
 		//Imgproc.goodFeaturesToTrack(image, corners, maxCorners, qualityLevel, minDistance, mask, blockSize, useHarrisDetector, k);
 		//Imgproc.goodFeaturesToTrack(gray, corners, blockSize, qLevel, minDist);
 		
@@ -537,16 +537,19 @@ public class MainController {
 		MatOfRect faceBoxes = new MatOfRect();
 		MatOfRect eyeBoxes = new MatOfRect();
 		MatOfRect mouthBoxes = new MatOfRect();
+		MatOfRect noseBoxes = new MatOfRect();
 		
 		Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);
 		
 		String faceCascadeFile = "src/application/haarcascade_frontalface_default.xml";
 		String eyeCascadeFile = "src/application/haarcascade_eye.xml";
-		String mouthCascadeFile = "src/application/haarcascade_smile.xml";
+		String mouthCascadeFile = "src/application/mouth.xml";
+		String noseCascadeFile = "src/application/nose.xml";
 		
 		CascadeClassifier faceCascade =  new CascadeClassifier(faceCascadeFile);				
 		CascadeClassifier eyeCascade =  new CascadeClassifier(eyeCascadeFile);
 		CascadeClassifier mouthCascade =  new CascadeClassifier(mouthCascadeFile);
+		CascadeClassifier noseCascade =  new CascadeClassifier(noseCascadeFile);
 		
 		if(faceCascade.empty())
 		{
@@ -567,30 +570,41 @@ public class MainController {
 			Mat roi = new Mat(gray,faces[i]);			
 			eyeCascade.detectMultiScale(roi, eyeBoxes);
 			mouthCascade.detectMultiScale(roi, mouthBoxes);
+			noseCascade.detectMultiScale(roi, noseBoxes);
 			Rect[] eyes = eyeBoxes.toArray();
 			Rect [] mouth = mouthBoxes.toArray();
+			Rect [] nose = noseBoxes.toArray();
+			System.out.println(nose.length);
 			
-			for(int j = 0; j < eyes.length; j++)
-			{	
-				Mat roiForCorners = new Mat(gray,eyes[j]);
-				Point [] eyeCorners = getTcorners(roiForCorners);
-				Point pt1 = new Point(faces[i].tl().x + eyes[j].tl().x,faces[i].tl().y + eyes[j].tl().y);
-				Point pt2 = new Point(faces[i].tl().x + eyes[j].tl().x + eyes[j].height,faces[i].tl().y + eyes[j].tl().y + eyes[i].width);
+				for(int j = 0; j < eyes.length; j++)
+				{	
+					Mat roiForCorners = new Mat(gray,eyes[j]);
+					Point [] eyeCorners = getTcorners(roiForCorners);
+					Point pt1 = new Point(faces[i].tl().x + eyes[j].tl().x,faces[i].tl().y + eyes[j].tl().y);
+					Point pt2 = new Point(faces[i].tl().x + eyes[j].tl().x + eyes[j].height,faces[i].tl().y + eyes[j].tl().y + eyes[i].width);
 						
-				Imgproc.rectangle(inImage, pt1, pt2, new Scalar(255,0,0),1);
-				for(int k = 0; k < eyeCorners.length; k++){
+					Imgproc.rectangle(inImage, pt1, pt2, new Scalar(255,0,0),1);
+					for(int k = 0; k < eyeCorners.length; k++){
 					
-					Point temp = new Point(pt1.x+eyeCorners[k].x,pt1.y + eyeCorners[k].y);
-					Imgproc.circle(inImage,temp, 3, new Scalar(0,255,0),-1);
+						Point temp = new Point(pt1.x+eyeCorners[k].x,pt1.y + eyeCorners[k].y);
+						Imgproc.circle(inImage,temp, 3, new Scalar(0,255,0),-1);
 				}
 				
 			
 			}
+			
+			for(int m = 0; m < nose.length; m++){
+				Point nosePt1 = new Point(faces[i].tl().x + nose[m].tl().x,faces[i].tl().y + nose[m].tl().y);
+				Point nosePt2 = new Point(faces[i].tl().x + nose[m].tl().x + nose[m].height,faces[i].tl().y + nose[m].tl().y + nose[m].width);
+				
+				Imgproc.rectangle(inImage, nosePt1, nosePt2, new Scalar(255,255,0),1);
+			}
 			for(int l = 0; l < mouth.length; l++){
 				Point pt1 = new Point(faces[i].tl().x + mouth[l].tl().x,faces[i].tl().y + mouth[l].tl().y);
 				Point pt2 = new Point(faces[i].tl().x + mouth[l].tl().x + mouth[l].height,faces[i].tl().y + mouth[l].tl().y + mouth[l].width);
-				
-				Imgproc.rectangle(inImage, pt1, pt2, new Scalar(0,0,0),1);
+				//if(pt1.x > faces[i].tl().x + faces[i].height/1.9 && pt1.y > faces[i].tl().y + faces[i].height/1.9)
+				//if(pt1.x >)
+					Imgproc.rectangle(inImage, pt1, pt2, new Scalar(0,0,0),1);
 			}
 			
 			
@@ -599,6 +613,16 @@ public class MainController {
 		return inImage;
 		
 		
+	}
+	
+	public Mat getBlobs(Mat inImage, Mat originalImage)
+	{
+		
+		Mat gray = new Mat();
+		Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);
+		
+		
+		return originalImage;
 	}
 	
 	
