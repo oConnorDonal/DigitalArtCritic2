@@ -90,7 +90,7 @@ public class MainController {
 		 BufferedImage image = ImageIO.read(file);		*/
 		
 		try {
-			image = ImageIO.read( new File("src/application/girl.jpg"));
+			image = ImageIO.read( new File("src/application/stars.jpg"));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -103,15 +103,15 @@ public class MainController {
 		//BufferedImage image1 = format.matToBuffColour(  showLineSegments( filter.toCanny((format.buffToMat(image)) ) ,format.buffToMat(image) ))  ;
 		
 		// BufferedImage image1 = format.matToBinBuff(showLines( format.toThresh(format.buffToMat(image)),format.buffToMat(image)));
-		//BufferedImage image1 = format.matToBuff(toCanny(format.buffToMat(image)));
+		//BufferedImage image1 = format.matToBuff(filter.toCanny(format.buffToMat(image)));
 		
 		
 		//BufferedImage image1 = format.matToBuffColour(getTcorners(format.buffToMat(image),format.buffToMat(image))); 
 		
-		BufferedImage image1 = format.matToBuffColour(displayFaceFeatures(format.buffToMat(image))); 
+		//BufferedImage image1 = format.matToBuffColour(displayFaceFeatures(format.buffToMat(image))); 
+		BufferedImage image1 = format.matToBuff(getOutLine(format.buffToMat(image),format.buffToMat(image) )); 
 		
-		
-		//BufferedImage image1 = matToBinBuff(toThresh(buffToMat(image)));
+		//BufferedImage image1 = format.matToBuff(format.toThresh(format.buffToMat(image)));
 		 
 		Image original = SwingFXUtils.toFXImage(image, null);	
 		Image convertedImage = SwingFXUtils.toFXImage(image1, null);		 
@@ -560,28 +560,29 @@ public class MainController {
 		
 		
 		Rect[] faces = faceBoxes.toArray();
-		
+		Point nosePt1 = null;
 		
 		for(int i = 0; i < faces.length; i++){	
 			
 			Imgproc.rectangle(inImage, faces[i].tl(), faces[i].br(), new Scalar(0,0,255),2);			
 			
 			
+			
 			Mat roi = new Mat(gray,faces[i]);			
 			eyeCascade.detectMultiScale(roi, eyeBoxes);
 			mouthCascade.detectMultiScale(roi, mouthBoxes);
-			noseCascade.detectMultiScale(roi, noseBoxes);
+			noseCascade.detectMultiScale(roi, noseBoxes);			
 			Rect[] eyes = eyeBoxes.toArray();
 			Rect [] mouth = mouthBoxes.toArray();
 			Rect [] nose = noseBoxes.toArray();
-			System.out.println(nose.length);
+			
 			
 				for(int j = 0; j < eyes.length; j++)
 				{	
 					Mat roiForCorners = new Mat(gray,eyes[j]);
 					Point [] eyeCorners = getTcorners(roiForCorners);
 					Point pt1 = new Point(faces[i].tl().x + eyes[j].tl().x,faces[i].tl().y + eyes[j].tl().y);
-					Point pt2 = new Point(faces[i].tl().x + eyes[j].tl().x + eyes[j].height,faces[i].tl().y + eyes[j].tl().y + eyes[i].width);
+					Point pt2 = new Point(pt1.x + eyes[j].width,pt1.y + eyes[j].height);
 						
 					Imgproc.rectangle(inImage, pt1, pt2, new Scalar(255,0,0),1);
 					for(int k = 0; k < eyeCorners.length; k++){
@@ -594,17 +595,15 @@ public class MainController {
 			}
 			
 			for(int m = 0; m < nose.length; m++){
-				Point nosePt1 = new Point(faces[i].tl().x + nose[m].tl().x,faces[i].tl().y + nose[m].tl().y);
-				Point nosePt2 = new Point(faces[i].tl().x + nose[m].tl().x + nose[m].height,faces[i].tl().y + nose[m].tl().y + nose[m].width);
-				
-				Imgproc.rectangle(inImage, nosePt1, nosePt2, new Scalar(255,255,0),1);
+				nosePt1 = new Point(faces[i].tl().x + nose[m].tl().x,faces[i].tl().y + nose[m].tl().y);				
+				Point pt2 = new Point(nosePt1.x + nose[m].width,nosePt1.y + nose[m].height);
+				Imgproc.rectangle(inImage, nosePt1, pt2, new Scalar(255,255,0),1);
 			}
 			for(int l = 0; l < mouth.length; l++){
 				Point pt1 = new Point(faces[i].tl().x + mouth[l].tl().x,faces[i].tl().y + mouth[l].tl().y);
-				Point pt2 = new Point(faces[i].tl().x + mouth[l].tl().x + mouth[l].height,faces[i].tl().y + mouth[l].tl().y + mouth[l].width);
-				//if(pt1.x > faces[i].tl().x + faces[i].height/1.9 && pt1.y > faces[i].tl().y + faces[i].height/1.9)
-				//if(pt1.x >)
-					Imgproc.rectangle(inImage, pt1, pt2, new Scalar(0,0,0),1);
+				Point pt2 = new Point(pt1.x + mouth[l].width,pt1.y + mouth[l].height);
+				if(pt1.y > nosePt1.y)				
+				Imgproc.rectangle(inImage, pt1, pt2, new Scalar(0,0,0),1);
 			}
 			
 			
@@ -624,6 +623,14 @@ public class MainController {
 		
 		return originalImage;
 	}
+	
+	public Mat getOutLine(Mat inImage,Mat originalImage){		
+		
+		
+		return filter.getContours(format.toThresh(inImage),originalImage);
+	}
+	
+
 	
 	
 	

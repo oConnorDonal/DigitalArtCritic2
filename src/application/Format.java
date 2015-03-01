@@ -40,9 +40,6 @@ public BufferedImage matToBuff(Mat matIn){
 	
 	public BufferedImage matToBinBuff(Mat matIn){
 		
-		//System.out.println(" Matto buff");
-
-		
 		byte [] data1 = new byte [matIn.rows() * matIn.cols() * (int)matIn.elemSize()];
 		matIn.get(0, 0,data1);
 		BufferedImage image1 = new BufferedImage(matIn.cols(), matIn.rows(),BufferedImage.TYPE_BYTE_BINARY);
@@ -56,7 +53,7 @@ public BufferedImage matToBuff(Mat matIn){
 		Mat gray = new Mat ();
 		Mat outImage = new Mat();
 		Imgproc.cvtColor(inImage, gray, Imgproc.COLOR_BGR2GRAY);
-		Imgproc.threshold(gray, outImage, 0, 255, Imgproc.THRESH_TOZERO);
+		Imgproc.threshold(gray, outImage, 127, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C);
 		return outImage;
 		
 		
