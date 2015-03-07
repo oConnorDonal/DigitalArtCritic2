@@ -53,7 +53,7 @@ public BufferedImage matToBuff(Mat matIn){
 		Mat gray = new Mat ();
 		Mat outImage = new Mat();
 		Imgproc.cvtColor(inImage, gray, Imgproc.COLOR_BGR2GRAY);
-		Imgproc.threshold(gray, outImage, 127, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C);
+		Imgproc.threshold(gray, outImage, 127, 255, Imgproc.THRESH_TOZERO);
 		return outImage;
 		
 		

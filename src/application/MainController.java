@@ -29,6 +29,7 @@ import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.utils.Converters;
+import org.opencv.video.BackgroundSubtractor;
 
 import com.sun.javafx.geom.Line2D;
 import com.sun.javafx.geom.Vec2d;
@@ -90,7 +91,7 @@ public class MainController {
 		 BufferedImage image = ImageIO.read(file);		*/
 		
 		try {
-			image = ImageIO.read( new File("src/application/stars.jpg"));
+			image = ImageIO.read( new File("src/application/scene.jpg"));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -109,9 +110,13 @@ public class MainController {
 		//BufferedImage image1 = format.matToBuffColour(getTcorners(format.buffToMat(image),format.buffToMat(image))); 
 		
 		//BufferedImage image1 = format.matToBuffColour(displayFaceFeatures(format.buffToMat(image))); 
-		BufferedImage image1 = format.matToBuff(getOutLine(format.buffToMat(image),format.buffToMat(image) )); 
+		//BufferedImage image1 = format.matToBuffColour(getOutLine(format.toThresh(format.buffToMat(image)),format.buffToMat(image) )); 
 		
 		//BufferedImage image1 = format.matToBuff(format.toThresh(format.buffToMat(image)));
+		
+		//BufferedImage image1 = format.matToBuffColour(getThirds(format.buffToMat(image)));
+		
+		BufferedImage image1 = format.matToBuffColour(getHorizonLine(format.buffToMat(image),format.buffToMat(image)));
 		 
 		Image original = SwingFXUtils.toFXImage(image, null);	
 		Image convertedImage = SwingFXUtils.toFXImage(image1, null);		 
@@ -134,10 +139,9 @@ public class MainController {
 		List <Line> mLines = new ArrayList<Line>();	
 		List <Line> verticalLines = new ArrayList<Line>();
 		List <Line> correctLines = new ArrayList<Line>();
-		List<Point> intersectionPoints = new ArrayList();
+		List <Point> correctPoints = new ArrayList<Point>();
 		
-		TreeMap<Double, Point> mappedPoints = new TreeMap<Double, Point>();	
-		TreeMap<Double, Point> correctMappedPoints = new TreeMap<Double, Point>();	
+		TreeMap<Double, Point> mappedPoints = new TreeMap<Double, Point>();			
 		
 		Imgproc.HoughLinesP(image, lines, 1, Math.PI/180,100,50,10);				
 		
@@ -172,8 +176,7 @@ public class MainController {
 			{
 				if(pLines.get(i).isNear(pLines.get(j)))
 				{					
-					Line temp = pLines.get(i).getMidLinePoints(pLines.get(j));
-					//System.out.println("temp "+temp.toString());
+					Line temp = pLines.get(i).getMidLinePoints(pLines.get(j));					
 					mLines.add(temp);					
 				}
 			}
@@ -199,26 +202,33 @@ public class MainController {
 			
 			if(mLines.get(i).isPointOnLine(p))
 			{
-				Imgproc.line(originalImage, mLines.get(i).pt1, mLines.get(i).pt2, new Scalar(255, 0,0 ),2);							
+				Imgproc.line(originalImage, mLines.get(i).pt1, mLines.get(i).pt2, new Scalar(255, 0,0 ),2);
+				Line correctLine = new Line(mLines.get(i).pt1,p);
+				correctLines.add(correctLine);
 			}			
-			Line correctLine = new Line(mLines.get(i).pt1,p);	
-			correctLines.add(correctLine);
+			
+			
+			
 		}		
 		
 		Imgproc.circle(originalImage, p, 5, new Scalar(0,0,255),1);			
 		
 		for (int i = 0; i < correctLines.size();i++)
 		{
-			for(int j = i+1; j < verticalLines.size(); j++)
+			for(int j = 0; j < verticalLines.size(); j++)
 			{		
-					Point temp = correctLines.get(i).getIntersectionPoint(verticalLines.get(j));					
-					double dist = getLength(temp, p);
-					correctMappedPoints.put(dist, temp);		
+				Point temp = correctLines.get(i).getIntersectionPoint(verticalLines.get(j));
+				correctPoints.add(temp);										
+							
 			}
 		}	
 		
-		Point cp = correctMappedPoints.firstEntry().getValue();
-		//Imgproc.line(originalImage, mLines.get(i).pt1, mLines.get(i).pt2, new Scalar(255, 0,0 ),2);
+		System.out.println(correctPoints.size());
+		for(int i = 0; i < correctPoints.size();i++){
+			for(int j = i+1; j < correctPoints.size();j++){
+				Imgproc.line(originalImage, correctPoints.get(i), correctPoints.get(j), new Scalar(0,255,0),2);
+			}
+		}
 		
 			
 		
@@ -294,28 +304,6 @@ public class MainController {
 		
 		
 		
-		/*for(int i = 0; i < lines.size(); i ++)
-		{	
-			for(int j = 0; j < lines.size(); j++)
-			{
-		
-				double A1 = lines.get(i).getDY();
-				double B1 = lines.get(i).getDX();
-				double C1 = ( A1 * lines.get(i).pt1.x) + (B1 * lines.get(i).pt1.y);				
-				
-				double A2 = lines.get(j).getDY();
-				double B2 = lines.get(j).getDX();
-				double C2= ( A2 * lines.get(j).pt1.x) + (B2 * lines.get(j).pt1.y);			
-				
-								
-				double det  = (A1 * B2) - (A2 * B1);				
-				double xPoint = (B2 * C1 - B1 * C2)/det;
-				double yPoint = (A1 * C2 - A2 * C1)/det;	
-				
-				System.out.println(xPoint);
-				System.out.println(yPoint);
-				Imgproc.circle(originalImage, new Point(xPoint,yPoint), 5, new Scalar(0,0,255),2 );
-			}*/
 		
 		
 		
@@ -387,58 +375,9 @@ public class MainController {
 	
 	
 	
-	public void printIntersection(){
-		
-		Point pt1 = new Point();
-		Point pt2 = new Point();
-		Point pt3 = new Point();
-		Point pt4 = new Point();
-		
-		pt1.x = -876.0;
-		pt1.y = -484.0;
-		
-		pt2.x = 857.0;
-		pt2.y = 516.0;
-		
-		pt3.x = -691.0;
-		pt3.y = 772.0;
-		
-		pt4.x = 986.0;
-		pt4.y = -317.0;
-		
-		double A1 = pt2.y - pt1.y;
-		double B1 = pt1.x - pt2.x;		
-		double C1 = (A1*pt1.x) + (B1 * pt1.y);
-		
-		double A2 = pt4.y - pt3.y;
-		double B2 = pt3.x - pt4.x;		
-		double C2 = (A2*pt3.x) + (B2 * pt3.y);
-		
-		double det = (A1*B2) - (A2*B1);		
-		
-		double x = (B2*C1 - B1*C2)/det;
-		double y = (A1*C2 - A2*C1)/det;
-		
-		System.out.println(x);
-		System.out.println(y);
-		
-		
-		
-	}
 	
-	public void slopeIntercept()
-	{
-		Point pt1 = new Point(27,18);
-		Point pt2 = new Point(20,3);
-		
-		double m = (pt2.y - pt1.y) /( pt2.x - pt1.x);
-		
-		//y=mx+b  where b is the intercept
-		
-		double b =  pt2.y- (m *pt2.x) ;
-		
-		//System.out.println(b);
-	}
+	
+	
 	
 	public boolean isSimilar(double val1,double val2, double range){
 		
@@ -491,7 +430,7 @@ public class MainController {
 		//Mat gray = new Mat();
 		Mat param = new Mat();
 		double qLevel = 0.1;
-		double minDist = 35;
+		double minDist = 10;
 		int blockSize = 3;
 		boolean  useHarris = true;
 		double k = 0.04;
@@ -499,7 +438,7 @@ public class MainController {
 		
 		//Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);
 		
-		Imgproc.goodFeaturesToTrack(inImage, corners, 4, qLevel, minDist,param,blockSize,useHarris,k);
+		Imgproc.goodFeaturesToTrack(inImage, corners, 500, qLevel, minDist,param,blockSize,useHarris,k);
 		//Imgproc.goodFeaturesToTrack(image, corners, maxCorners, qualityLevel, minDistance, mask, blockSize, useHarrisDetector, k);
 		//Imgproc.goodFeaturesToTrack(gray, corners, blockSize, qLevel, minDist);
 		
@@ -627,17 +566,106 @@ public class MainController {
 	public Mat getOutLine(Mat inImage,Mat originalImage){		
 		
 		
-		return filter.getContours(format.toThresh(inImage),originalImage);
+		return filter.getContours(inImage,originalImage);
 	}
 	
-
+	
+	public Mat getThirds(Mat inImage){
+		
+	
+		double X = 0;
+		double Y = 0;
+		double w = inImage.width();
+		double h = inImage.height();
+		
+		Point topLineStartPoint = new Point(X,h/3);
+		Point topLineEndPoint = new Point(X + w,h/3);
+		
+		Point bottomLineStartPoint = new Point(X,h/3 + h/3);
+		Point bottomLineEndPoint = new Point(X + w,h/3 + h/3);
+		
+		Point leftLineStartPoint = new Point(w/3,Y);
+		Point leftLineEndPoint = new Point(w/3,Y+ h);
+		
+		Point rightLineStartPoint = new Point(w/3 + w/3 ,Y);
+		Point rightLineEndPoint = new Point(w/3 + w/3,Y+ h);
+		
+		Line topLine = new Line(topLineStartPoint,topLineEndPoint);
+		Line bottomLine = new Line(bottomLineStartPoint,bottomLineEndPoint);
+		
+		Line leftLine = new Line(leftLineStartPoint,leftLineEndPoint);
+		Line rightLine = new Line(rightLineStartPoint,rightLineEndPoint);
+		
+		
+		Imgproc.line(inImage, topLine.pt1, topLine.pt2, new Scalar(0, 255,0 ),1);
+		Imgproc.line(inImage, bottomLine.pt1, bottomLine.pt2, new Scalar(0, 255,0 ),1);
+		
+		Imgproc.line(inImage, leftLine.pt1, leftLine.pt2, new Scalar(0, 255,0 ),1);
+		Imgproc.line(inImage, rightLine.pt1, rightLine.pt2, new Scalar(0, 255,0 ),1);
+		
+		return inImage;
+		
+	}
+	
+	public Mat getHorizonLine(Mat inImage,Mat originalImage){
+		
+		Mat lines = filter.toCanny(inImage);
+		Mat hLines = new Mat();
+		
+		List<Line> sLines = new ArrayList<Line>();
+		List<Scalar>colours = new ArrayList<Scalar>();
+		
+		Imgproc.HoughLinesP(lines, hLines, 1,  Math.PI/180,100,100,10);				
+		
+		for(int i = 0; i < hLines.rows(); i++)
+		{			
+			double [] val  = hLines.get(i,0);
+			Point pt1 = new Point();
+			Point pt2 = new Point();
+			
+			pt1.x = val[0];
+			pt1.y = val[1];
+			
+			pt2.x = val[2];
+			pt2.y = val[3];	
+			
+			Line temp = new Line(pt1,pt2);
+			
+			Point rectTl = new Point(temp.pt1.x,temp.pt1.y-20);
+			Point rectBr = new Point(temp.pt2.x,temp.pt2.y + 20);
+			
+			Rect rect = new Rect(rectTl,rectBr);
+			
+			Mat roi = new Mat(inImage,rect);
+			
+			
+			for (int k = 0; k < roi.rows(); k++){
+				Scalar tempC = new Scalar(roi.get(k, 0));					
+				colours.add(tempC);
+				
+			}
+			
+			for(int l = 0; l < colours.size()-1;l++)
+			{
+				if(colours.get(l).equals(colours.get(l+1)));
+				colours.remove(l+1);
+			}
+			
+			System.out.println(colours);
+			Imgproc.rectangle(originalImage, rectTl, rectBr, new Scalar(162,111,78));
+			
+			sLines.add(temp);
+			
+			
+			Imgproc.line(originalImage,temp.pt1, temp.pt2, new Scalar(255,0 ,0 ),1);
+		
+		}
+		
+		
+		return originalImage;
+	}
 	
 	
-	
-		
-		
-		
-		
 	
 	
 	
