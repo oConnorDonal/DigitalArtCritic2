@@ -77,7 +77,7 @@ public class Filter {
 			boundingRect = Imgproc.boundingRect(contours.get(i));
 		}
 		
-		Imgproc.rectangle(originalImage, boundingRect.tl(), boundingRect.br(), new Scalar(0,0,255));
+		Imgproc.rectangle(originalImage, boundingRect.tl(), boundingRect.br(), new Scalar(0,255,0));
 		
 		return originalImage;
 	}

@@ -91,7 +91,7 @@ public class MainController {
 		 BufferedImage image = ImageIO.read(file);		*/
 		
 		try {
-			image = ImageIO.read( new File("src/application/scene.jpg"));
+			image = ImageIO.read( new File("src/application/model.jpg"));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -109,14 +109,16 @@ public class MainController {
 		
 		//BufferedImage image1 = format.matToBuffColour(getTcorners(format.buffToMat(image),format.buffToMat(image))); 
 		
-		//BufferedImage image1 = format.matToBuffColour(displayFaceFeatures(format.buffToMat(image))); 
+		BufferedImage image1 = format.matToBuffColour(displayFaceFeatures(format.buffToMat(image))); 
 		//BufferedImage image1 = format.matToBuffColour(getOutLine(format.toThresh(format.buffToMat(image)),format.buffToMat(image) )); 
 		
 		//BufferedImage image1 = format.matToBuff(format.toThresh(format.buffToMat(image)));
 		
 		//BufferedImage image1 = format.matToBuffColour(getThirds(format.buffToMat(image)));
 		
-		BufferedImage image1 = format.matToBuffColour(getHorizonLine(format.buffToMat(image),format.buffToMat(image)));
+		//BufferedImage image1 = format.matToBuffColour(getforeground(format.buffToMat(image)));
+		
+		//BufferedImage image1 = format.matToBuffColour(getHorizonLine(format.buffToMat(image),format.buffToMat(image)));
 		 
 		Image original = SwingFXUtils.toFXImage(image, null);	
 		Image convertedImage = SwingFXUtils.toFXImage(image1, null);		 
@@ -594,8 +596,7 @@ public class MainController {
 		Line bottomLine = new Line(bottomLineStartPoint,bottomLineEndPoint);
 		
 		Line leftLine = new Line(leftLineStartPoint,leftLineEndPoint);
-		Line rightLine = new Line(rightLineStartPoint,rightLineEndPoint);
-		
+		Line rightLine = new Line(rightLineStartPoint,rightLineEndPoint);		
 		
 		Imgproc.line(inImage, topLine.pt1, topLine.pt2, new Scalar(0, 255,0 ),1);
 		Imgproc.line(inImage, bottomLine.pt1, bottomLine.pt2, new Scalar(0, 255,0 ),1);
@@ -614,6 +615,7 @@ public class MainController {
 		
 		List<Line> sLines = new ArrayList<Line>();
 		List<Scalar>colours = new ArrayList<Scalar>();
+		List<Double>dists = new ArrayList<Double>();
 		
 		Imgproc.HoughLinesP(lines, hLines, 1,  Math.PI/180,100,100,10);				
 		
@@ -631,6 +633,7 @@ public class MainController {
 			
 			Line temp = new Line(pt1,pt2);
 			
+			
 			Point rectTl = new Point(temp.pt1.x,temp.pt1.y-20);
 			Point rectBr = new Point(temp.pt2.x,temp.pt2.y + 20);
 			
@@ -641,8 +644,7 @@ public class MainController {
 			
 			for (int k = 0; k < roi.rows(); k++){
 				Scalar tempC = new Scalar(roi.get(k, 0));					
-				colours.add(tempC);
-				
+				colours.add(tempC);				
 			}
 			
 			for(int l = 0; l < colours.size()-1;l++)
@@ -651,19 +653,57 @@ public class MainController {
 				colours.remove(l+1);
 			}
 			
-			System.out.println(colours);
-			Imgproc.rectangle(originalImage, rectTl, rectBr, new Scalar(162,111,78));
+			for(int x = 0; x < colours.size(); x++){
+				for(int y = 0; y < colours.size();y++)
+				{				
+					double[] colVals1 = colours.get(x).val;
+					double[] colVals2 = colours.get(y).val;
+					double x1 = colVals1[0];
+					double y1 = colVals1[1];
+					double z1 = colVals1[2];
+					
+					double x2 = colVals2[0];
+					double y2 = colVals2[1];
+					double z2 = colVals2[2];
+					
+					double xd = x2-x1;
+					double yd = y2-y1;
+					double zd = z2-z1;
+					
+					double distance = Math.sqrt( (xd * xd) + (yd * yd) + (zd * zd) );
+					dists.add(distance);
+							
+					//Imgproc.line(originalImage,temp.pt1, temp.pt2, new Scalar(255,0 ,0 ),1);
+					
+				}
+				
+			}
 			
-			sLines.add(temp);
+			Collections.sort(dists);
+			System.out.println(dists);
+			double min = dists.get(0);
+			System.out.println(min);
+			double max = dists.get(dists.size()-1);
+			System.out.println(max);
+			double range = max - min;
+			if(range > 150)
+				Imgproc.line(originalImage,temp.pt1, temp.pt2, new Scalar(255,0 ,0 ),1);
 			
 			
-			Imgproc.line(originalImage,temp.pt1, temp.pt2, new Scalar(255,0 ,0 ),1);
+			//Imgproc.rectangle(originalImage, rectTl, rectBr, new Scalar(162,111,78));
+			
+			
+			
+			
+			//Imgproc.line(originalImage,temp.pt1, temp.pt2, new Scalar(255,0 ,0 ),1);
 		
 		}
 		
 		
 		return originalImage;
 	}
+	
+	
 	
 	
 	
