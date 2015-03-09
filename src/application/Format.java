@@ -30,11 +30,12 @@ public BufferedImage matToBuff(Mat matIn){
 	//System.out.println(" Matto buff");
 
 	
-	byte [] data1 = new byte [matIn.rows() * matIn.cols() * (int)matIn.elemSize()];
-	matIn.get(0, 0,data1);
-	BufferedImage image1 = new BufferedImage(matIn.cols(), matIn.rows(),5);
-	image1.getRaster().setDataElements(0, 0, matIn.cols(),matIn.rows(), data1);
-	return image1;
+		byte [] data1 = new byte [matIn.rows() * matIn.cols() * (int)matIn.elemSize()];
+		matIn.get(0, 0,data1);
+		BufferedImage image1 = new BufferedImage(matIn.cols(), matIn.rows(),5);		
+		image1.getRaster().setDataElements(0, 0, matIn.cols(),matIn.rows(), data1);
+		
+		return image1;
 	
 	}
 	

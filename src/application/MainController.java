@@ -91,7 +91,7 @@ public class MainController {
 		 BufferedImage image = ImageIO.read(file);		*/
 		
 		try {
-			image = ImageIO.read( new File("src/application/model.jpg"));
+			image = ImageIO.read( new File("src/application/couple.jpg"));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -236,9 +236,7 @@ public class MainController {
 		
 		return originalImage;
 		
-	}
-	
-	
+	}	
 	
 	
 	public Mat showLines(Mat image,Mat originalImage){
@@ -377,10 +375,6 @@ public class MainController {
 	
 	
 	
-	
-	
-	
-	
 	public boolean isSimilar(double val1,double val2, double range){
 		
 		return Math.abs(val1 - val2 ) < range;
@@ -426,7 +420,7 @@ public class MainController {
 	}
 	
 	
-	public Point[] getTcorners(Mat inImage /*Mat originalImage*/){
+	public Point[] getTcornersP(Mat inImage /*Mat originalImage*/){
 		
 		MatOfPoint corners = new MatOfPoint();
 		//Mat gray = new Mat();
@@ -453,6 +447,35 @@ public class MainController {
 		
 		
 		return points;
+	}
+	
+	public Mat getTcorners(Mat inImage ,Mat originalImage){
+		
+		MatOfPoint corners = new MatOfPoint();
+		Mat gray = new Mat();
+		Mat param = new Mat();
+		double qLevel = 0.1;
+		double minDist = 10;
+		int blockSize = 3;
+		boolean  useHarris = true;
+		double k = 0.04;
+		
+		
+		Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);
+		
+		Imgproc.goodFeaturesToTrack(gray, corners, 200, qLevel, minDist,param,blockSize,useHarris,k);
+		//Imgproc.goodFeaturesToTrack(image, corners, maxCorners, qualityLevel, minDistance, mask, blockSize, useHarrisDetector, k);
+		//Imgproc.goodFeaturesToTrack(gray, corners, blockSize, qLevel, minDist);
+		
+		Point [] points = corners.toArray();
+		
+		for(int i = 0; i < points.length;i++){
+			Imgproc.circle(originalImage,points[i], 3, new Scalar(0,255,0),-1);
+		}
+		
+		
+		
+		return originalImage;
 	}
 	
 	public static double toRadians(float inFloat){
@@ -482,7 +505,7 @@ public class MainController {
 		
 		Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);
 		
-		String faceCascadeFile = "src/application/haarcascade_frontalface_default.xml";
+		String faceCascadeFile = "src/application/haarcascade_frontalface_alt.xml";
 		String eyeCascadeFile = "src/application/haarcascade_eye.xml";
 		String mouthCascadeFile = "src/application/mouth.xml";
 		String noseCascadeFile = "src/application/nose.xml";
@@ -508,7 +531,6 @@ public class MainController {
 			Imgproc.rectangle(inImage, faces[i].tl(), faces[i].br(), new Scalar(0,0,255),2);			
 			
 			
-			
 			Mat roi = new Mat(gray,faces[i]);			
 			eyeCascade.detectMultiScale(roi, eyeBoxes);
 			mouthCascade.detectMultiScale(roi, mouthBoxes);
@@ -517,11 +539,13 @@ public class MainController {
 			Rect [] mouth = mouthBoxes.toArray();
 			Rect [] nose = noseBoxes.toArray();
 			
-			
+			if(faces[i] != null)
+			{
+				
 				for(int j = 0; j < eyes.length; j++)
 				{	
 					Mat roiForCorners = new Mat(gray,eyes[j]);
-					Point [] eyeCorners = getTcorners(roiForCorners);
+					Point [] eyeCorners = getTcornersP(roiForCorners);
 					Point pt1 = new Point(faces[i].tl().x + eyes[j].tl().x,faces[i].tl().y + eyes[j].tl().y);
 					Point pt2 = new Point(pt1.x + eyes[j].width,pt1.y + eyes[j].height);
 						
@@ -534,17 +558,26 @@ public class MainController {
 				
 			
 			}
-			
-			for(int m = 0; m < nose.length; m++){
-				nosePt1 = new Point(faces[i].tl().x + nose[m].tl().x,faces[i].tl().y + nose[m].tl().y);				
-				Point pt2 = new Point(nosePt1.x + nose[m].width,nosePt1.y + nose[m].height);
-				Imgproc.rectangle(inImage, nosePt1, pt2, new Scalar(255,255,0),1);
 			}
-			for(int l = 0; l < mouth.length; l++){
-				Point pt1 = new Point(faces[i].tl().x + mouth[l].tl().x,faces[i].tl().y + mouth[l].tl().y);
-				Point pt2 = new Point(pt1.x + mouth[l].width,pt1.y + mouth[l].height);
-				if(pt1.y > nosePt1.y)				
-				Imgproc.rectangle(inImage, pt1, pt2, new Scalar(0,0,0),1);
+			else{
+				System.out.println("no face");
+			}
+			if(nose.length != 0)
+			{
+				for(int m = 0; m < nose.length; m++){
+					nosePt1 = new Point(faces[i].tl().x + nose[m].tl().x,faces[i].tl().y + nose[m].tl().y);				
+					Point pt2 = new Point(nosePt1.x + nose[m].width,nosePt1.y + nose[m].height);
+					Imgproc.rectangle(inImage, nosePt1, pt2, new Scalar(255,255,0),1);
+				}
+				for(int l = 0; l < mouth.length; l++){
+					Point pt1 = new Point(faces[i].tl().x + mouth[l].tl().x,faces[i].tl().y + mouth[l].tl().y);
+					Point pt2 = new Point(pt1.x + mouth[l].width,pt1.y + mouth[l].height);
+					if(pt1.y > nosePt1.y)				
+					Imgproc.rectangle(inImage, pt1, pt2, new Scalar(0,0,0),1);
+				}
+			}
+			else{
+				System.out.println("no one nose");
 			}
 			
 			
@@ -559,8 +592,7 @@ public class MainController {
 	{
 		
 		Mat gray = new Mat();
-		Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);
-		
+		Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);		
 		
 		return originalImage;
 	}
@@ -631,8 +663,7 @@ public class MainController {
 			pt2.x = val[2];
 			pt2.y = val[3];	
 			
-			Line temp = new Line(pt1,pt2);
-			
+			Line temp = new Line(pt1,pt2);			
 			
 			Point rectTl = new Point(temp.pt1.x,temp.pt1.y-20);
 			Point rectBr = new Point(temp.pt2.x,temp.pt2.y + 20);
@@ -643,7 +674,7 @@ public class MainController {
 			
 			
 			for (int k = 0; k < roi.rows(); k++){
-				Scalar tempC = new Scalar(roi.get(k, 0));					
+				Scalar tempC = new Scalar(roi.get(k, 0));				
 				colours.add(tempC);				
 			}
 			
