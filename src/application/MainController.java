@@ -41,6 +41,7 @@ import javafx.geometry.Point2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.shape.Circle;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -91,7 +92,7 @@ public class MainController {
 		 BufferedImage image = ImageIO.read(file);		*/
 		
 		try {
-			image = ImageIO.read( new File("src/application/couple.jpg"));
+			image = ImageIO.read( new File("src/application/bad.jpg"));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -109,7 +110,7 @@ public class MainController {
 		
 		//BufferedImage image1 = format.matToBuffColour(getTcorners(format.buffToMat(image),format.buffToMat(image))); 
 		
-		BufferedImage image1 = format.matToBuffColour(displayFaceFeatures(format.buffToMat(image))); 
+		//BufferedImage image1 = format.matToBuffColour(displayFaceFeatures(format.buffToMat(image))); 
 		//BufferedImage image1 = format.matToBuffColour(getOutLine(format.toThresh(format.buffToMat(image)),format.buffToMat(image) )); 
 		
 		//BufferedImage image1 = format.matToBuff(format.toThresh(format.buffToMat(image)));
@@ -119,6 +120,8 @@ public class MainController {
 		//BufferedImage image1 = format.matToBuffColour(getforeground(format.buffToMat(image)));
 		
 		//BufferedImage image1 = format.matToBuffColour(getHorizonLine(format.buffToMat(image),format.buffToMat(image)));
+		
+		BufferedImage image1 = format.matToBuffColour(getFaceLines(format.buffToMat(image),format.buffToMat(image)));
 		 
 		Image original = SwingFXUtils.toFXImage(image, null);	
 		Image convertedImage = SwingFXUtils.toFXImage(image1, null);		 
@@ -381,49 +384,13 @@ public class MainController {
 		
 	}
 	
-	public Mat getCorners (Mat inImage, Mat originalImage){
-		
-		Mat gray  = new Mat();
-		Mat dst = new Mat();
-		dst = Mat.zeros(inImage.size(), CvType.CV_32FC1);
-		MatOfFloat dstNorm = new MatOfFloat();
-		Mat mask = new Mat();
-		Mat dstNormScaled = new Mat();
-		double thresh  = 200;
-		
-		Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);			
-		Imgproc.cornerHarris(gray, dst, 2, 3, Core.BORDER_DEFAULT);	
-		
-		Core.normalize(dst, dstNorm,0,255,Core.NORM_MINMAX,CvType.CV_32FC1,mask);
-		Core.convertScaleAbs(dstNorm, dstNormScaled);
-		
-		byte [] data1 = new byte [dstNorm.rows() * dstNorm.cols() * (int)dstNorm.elemSize()];
-		
-		for(int i = 0; i < dstNorm.rows(); i++)
-		{
-			for(int j = 0; j < dstNorm.cols(); j++)
-			{
-				float temp = 0;
-				double [] vals = dstNorm.get(j, i);
-				//if((int) dstNorm.get(j, i, data1) > thresh)
-				vals[i] = temp;
-				
-				
-					System.out.println(temp);
-				
-				
-			}
-		}
-		
-		return originalImage;
-		
-	}
+	
 	
 	
 	public Point[] getTcornersP(Mat inImage /*Mat originalImage*/){
 		
 		MatOfPoint corners = new MatOfPoint();
-		//Mat gray = new Mat();
+		Mat gray = new Mat();
 		Mat param = new Mat();
 		double qLevel = 0.1;
 		double minDist = 10;
@@ -432,9 +399,9 @@ public class MainController {
 		double k = 0.04;
 		
 		
-		//Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);
+		Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);
 		
-		Imgproc.goodFeaturesToTrack(inImage, corners, 500, qLevel, minDist,param,blockSize,useHarris,k);
+		Imgproc.goodFeaturesToTrack(gray, corners, 10, qLevel, minDist,param,blockSize,useHarris,k);
 		//Imgproc.goodFeaturesToTrack(image, corners, maxCorners, qualityLevel, minDistance, mask, blockSize, useHarrisDetector, k);
 		//Imgproc.goodFeaturesToTrack(gray, corners, blockSize, qLevel, minDist);
 		
@@ -497,11 +464,15 @@ public class MainController {
 	
 	public Mat displayFaceFeatures(Mat inImage){
 		
-		Mat gray = new Mat();		
+		Mat gray = new Mat();	
+		List<Point>eyePoints = new ArrayList<Point>();
 		MatOfRect faceBoxes = new MatOfRect();
 		MatOfRect eyeBoxes = new MatOfRect();
 		MatOfRect mouthBoxes = new MatOfRect();
 		MatOfRect noseBoxes = new MatOfRect();
+		
+		Point startf = null;
+		Point endf = null;
 		
 		Imgproc.cvtColor(inImage, gray,Imgproc.COLOR_BGR2GRAY);
 		
@@ -526,15 +497,19 @@ public class MainController {
 		Rect[] faces = faceBoxes.toArray();
 		Point nosePt1 = null;
 		
-		for(int i = 0; i < faces.length; i++){	
+		
+		for(int i = 0; i < faces.length; i++){				
+			
 			
 			Imgproc.rectangle(inImage, faces[i].tl(), faces[i].br(), new Scalar(0,0,255),2);			
+			 
 			
 			
 			Mat roi = new Mat(gray,faces[i]);			
 			eyeCascade.detectMultiScale(roi, eyeBoxes);
 			mouthCascade.detectMultiScale(roi, mouthBoxes);
-			noseCascade.detectMultiScale(roi, noseBoxes);			
+			noseCascade.detectMultiScale(roi, noseBoxes);	
+			
 			Rect[] eyes = eyeBoxes.toArray();
 			Rect [] mouth = mouthBoxes.toArray();
 			Rect [] nose = noseBoxes.toArray();
@@ -544,45 +519,66 @@ public class MainController {
 				
 				for(int j = 0; j < eyes.length; j++)
 				{	
-					Mat roiForCorners = new Mat(gray,eyes[j]);
-					Point [] eyeCorners = getTcornersP(roiForCorners);
+					//Mat roiForCorners = new Mat(gray,eyes[j]);
+					//Point [] eyeCorners = getTcornersP(roiForCorners);
 					Point pt1 = new Point(faces[i].tl().x + eyes[j].tl().x,faces[i].tl().y + eyes[j].tl().y);
 					Point pt2 = new Point(pt1.x + eyes[j].width,pt1.y + eyes[j].height);
+					Point leye = new Point(pt1.x + 2,pt1.y + eyes[j].height/2);
+					Point reye = new Point(pt1.x + eyes[j].width -2,pt1.y + eyes[j].height/2);
+					double dist = getLength(leye,reye);
+					startf = new Point (leye.x - dist,leye.y );					
+					endf = new Point (startf.x + dist * 5,leye.y );
+					
+					eyePoints.add(leye);
+					eyePoints.add(reye);
+					eyePoints.add(startf);
+					eyePoints.add(endf);
+					
+					
+					
 						
-					Imgproc.rectangle(inImage, pt1, pt2, new Scalar(255,0,0),1);
-					for(int k = 0; k < eyeCorners.length; k++){
+					//Imgproc.rectangle(inImage, pt1, pt2, new Scalar(255,0,0),1);
+					/*for(int k = 0; k < eyeCorners.length; k++)
+					{
 					
 						Point temp = new Point(pt1.x+eyeCorners[k].x,pt1.y + eyeCorners[k].y);
 						Imgproc.circle(inImage,temp, 3, new Scalar(0,255,0),-1);
-				}
+					}*/
 				
 			
 			}
 			}
 			else{
-				System.out.println("no face");
+				System.out.println("Talk to the hand cause there is no face");
 			}
 			if(nose.length != 0)
 			{
+				
 				for(int m = 0; m < nose.length; m++){
 					nosePt1 = new Point(faces[i].tl().x + nose[m].tl().x,faces[i].tl().y + nose[m].tl().y);				
 					Point pt2 = new Point(nosePt1.x + nose[m].width,nosePt1.y + nose[m].height);
-					Imgproc.rectangle(inImage, nosePt1, pt2, new Scalar(255,255,0),1);
+					//Imgproc.rectangle(inImage, nosePt1, pt2, new Scalar(255,255,0),1);
 				}
-				for(int l = 0; l < mouth.length; l++){
+				/*for(int l = 0; l < mouth.length; l++){
 					Point pt1 = new Point(faces[i].tl().x + mouth[l].tl().x,faces[i].tl().y + mouth[l].tl().y);
 					Point pt2 = new Point(pt1.x + mouth[l].width,pt1.y + mouth[l].height);
 					if(pt1.y > nosePt1.y)				
-					Imgproc.rectangle(inImage, pt1, pt2, new Scalar(0,0,0),1);
-				}
-			}
-			else{
-				System.out.println("no one nose");
+					//Imgproc.rectangle(inImage, pt1, pt2, new Scalar(0,0,0),1);
+				}*/
 			}
 			
+			else
+			{
+				System.out.println("no one nose");
+			}			
 			
 		
 		}
+		for (int i = 0; i < eyePoints.size();i++){
+			Imgproc.circle(inImage, eyePoints.get(i),3, new Scalar(0,255,0),-1);
+		}
+		
+		Imgproc.line(inImage, startf, endf, new Scalar(255,0,0),1);
 		return inImage;
 		
 		
@@ -733,6 +729,61 @@ public class MainController {
 		
 		return originalImage;
 	}
+	
+public Mat getFaceLines(Mat inImage,Mat originalImage){
+		
+		//Mat lines = filter.toCanny(inImage);
+		Mat hLines = new Mat();
+		Mat circles = new Mat();
+		Mat gray = new Mat();
+		Imgproc.cvtColor(inImage, gray, Imgproc.COLOR_BGR2GRAY);
+		
+		Imgproc.HoughCircles(gray, circles, Imgproc.CV_HOUGH_GRADIENT, 1, 3);
+		
+		//Imgproc.HoughLinesP(lines, hLines, 1,  Math.PI/180,45,10,10);				
+		
+		for(int i = 0; i < hLines.rows(); i++)
+		{			
+			double [] val  = hLines.get(i,0);
+			Point pt1 = new Point();
+			Point pt2 = new Point();
+			
+			pt1.x = val[0];
+			pt1.y = val[1];
+			
+			pt2.x = val[2];
+			pt2.y = val[3];	
+			
+			//Line temp = new Line(pt1,pt2);			
+			
+			Imgproc.line(originalImage, pt1, pt2, new Scalar(0,255,0),3);	
+		
+		
+		}
+		for(int i = 0; i < circles.rows(); i++)
+		{			
+			double [] val  = circles.get(i,0);
+			Point pt1 = new Point();			
+			
+			pt1.x = val[0];
+			pt1.y = val[1];
+			
+			
+			
+					
+			
+			Imgproc.circle(originalImage, pt1,20, new Scalar(0,255,0),0);	
+		
+		
+		}
+		
+		
+		return originalImage;
+	}
+	
+	
+	
+	
 	
 	
 	
