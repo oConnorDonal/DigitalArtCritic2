@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.*?>
 <?import javafx.scene.effect.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.image.*?>
@@ -53,17 +54,17 @@
                                   <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                 </rowConstraints>
                                  <children>
-                                    <RadioButton mnemonicParsing="false" text="Vanishing Points" textFill="#221b1b" GridPane.rowIndex="1">
+                                    <RadioButton fx:id="vpButton" mnemonicParsing="false" onAction="#getVp" text="Vanishing Points" textFill="#221b1b" GridPane.rowIndex="1">
                                        <padding>
                                           <Insets left="10.0" />
                                        </padding>
                                     </RadioButton>
-                                    <RadioButton mnemonicParsing="false" text="Rule of Thrids" GridPane.rowIndex="2">
+                                    <RadioButton fx:id="ROTButton" mnemonicParsing="false" onAction="#getROT" text="Rule of Thrids" GridPane.rowIndex="2">
                                        <padding>
                                           <Insets left="10.0" />
                                        </padding>
                                     </RadioButton>
-                                    <RadioButton mnemonicParsing="false" text="Rule of Odds" GridPane.rowIndex="3">
+                                    <RadioButton fx:id="proportionsButton" mnemonicParsing="false" onAction="#getPorportions" text="Proportions" GridPane.rowIndex="3">
                                        <padding>
                                           <Insets left="10.0" />
                                        </padding>
@@ -86,7 +87,12 @@
                   </SplitPane>
                </children>
             </AnchorPane>
-          <AnchorPane fx:id="bottomTextPane" minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0" />
+          <AnchorPane fx:id="bottomTextPane" minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
+               <children>
+                  <ImageView fx:id="tutorialImage" fitHeight="188.0" fitWidth="218.0" layoutX="14.0" layoutY="14.0" pickOnBounds="true" preserveRatio="true" />
+                  <Button fx:id="finish" layoutX="964.0" layoutY="231.0" mnemonicParsing="false" onAction="#finishTutorial" text="Finish" />
+                  <TextArea fx:id="textArea" layoutX="381.0" layoutY="14.0" prefHeight="246.0" prefWidth="575.0" />
+               </children></AnchorPane>
         </items>
       </SplitPane>
    </center>

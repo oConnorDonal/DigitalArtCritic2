@@ -42,26 +42,7 @@ public class Filter {
 
 	}
 
-	public Mat toSobel(Mat inImage) {
-
-		Mat dst = new Mat();
-		Mat gray = new Mat();
-		Imgproc.cvtColor(inImage, gray, Imgproc.COLOR_BGR2GRAY);
-		Imgproc.Sobel(gray, dst, CvType.CV_16S, 1, 0);
-
-		/*
-		 * Mat kernel = new Mat(9,9,CvType.CV_32F) { { put(0,0,-1); put(0,1,0);
-		 * put(0,2,1);
-		 * 
-		 * put(1,0,-2); put(1,1,0); put(1,2,2);
-		 * 
-		 * put(2,0,-1); put(2,1,0); put(2,2,1); } };
-		 * 
-		 * Imgproc.filter2D(gray, dst, -1, kernel);
-		 */
-
-		return dst;
-	}
+	
 	
 	public Mat getContours(Mat inImage, Mat originalImage){		
 		

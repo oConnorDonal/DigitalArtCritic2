@@ -11,9 +11,7 @@ import org.opencv.imgproc.Imgproc;
 public class Format {
 	
 	
-public BufferedImage matToBuff(Mat matIn){
-		
-		//System.out.println(" Matto buff");
+public BufferedImage matToBuff(Mat matIn){		
 
 		
 		byte [] data1 = new byte [matIn.rows() * matIn.cols() * (int)matIn.elemSize()];
@@ -25,10 +23,7 @@ public BufferedImage matToBuff(Mat matIn){
 	}
 
 
-	public BufferedImage matToBuffColour(Mat matIn){
-	
-	//System.out.println(" Matto buff");
-
+	public BufferedImage matToBuffColour(Mat matIn){	
 	
 		byte [] data1 = new byte [matIn.rows() * matIn.cols() * (int)matIn.elemSize()];
 		matIn.get(0, 0,data1);
@@ -58,21 +53,10 @@ public BufferedImage matToBuff(Mat matIn){
 		return outImage;
 		
 		
-	}
+	}	
 	
-	public Mat dilate (Mat inImage){
-		
-		int dilationSize = 7;
-		
-		Mat dilatedImage = new Mat();
-		Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2 * dilationSize +1,2 * dilationSize +1));
-		Imgproc.dilate(inImage, dilatedImage, kernel);
-		return dilatedImage;
-	}
 	
-	public Mat buffToMat(BufferedImage image){
-		
-		//System.out.println("buffto Mat");
+	public Mat buffToMat(BufferedImage image){			
 		
 		byte [] data = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
 		Mat originalImageMat  = new Mat(image.getHeight(),image.getWidth(),CvType.CV_8UC3);
