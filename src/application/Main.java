@@ -1,9 +1,15 @@
-package application;
-	
-import java.awt.image.BufferedImage;
-import java.io.File;
+/*
+ * Digtial Art Critic
+ * Donal O Connor
+ * C11529667
+ * 
+ * This class set up the primary stage for the GUI.
+ * Each primary stage has a scene object which can take a fxml
+ * file to load it and css file to style it
+ */
 
-import javax.imageio.ImageIO;
+
+package application;
 
 import org.opencv.core.Core;
 
@@ -12,42 +18,36 @@ import javafx.fxml.FXMLLoader;
 import javafx.stage.Stage;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.layout.BorderPane;
-
 
 public class Main extends Application {
-	
-	
+
 	@Override
 	public void start(Stage primaryStage) {
 		
-		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+		//OpenCV external library being loaded
+		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);	
 		
+
 		try {
-			
-			//BufferedImage image  = ImageIO.read(new File("src/application/lines.jpg"));
-			
-			FXMLLoader loader = new FXMLLoader(getClass().getResource("MainView.fxml"));			
-			Parent root = loader.load();	
+
+			FXMLLoader loader = new FXMLLoader(getClass().getResource(
+					"MainView.fxml"));
+			Parent root = loader.load();
 			MainController controller = loader.getController();
 			controller.init(primaryStage);
-			Scene scene = new Scene(root,1100,600);
-			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
+			Scene scene = new Scene(root, 1100, 600);
+			scene.getStylesheets().add(	getClass().getResource("application.css").toExternalForm());
 			primaryStage.setTitle("Digital Art Critic");
 			primaryStage.setScene(scene);
 			primaryStage.show();
-			
-			
-		} catch(Exception e) {
+
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
-	 
-	
+
 	public static void main(String[] args) {
 		launch(args);
-		
-		
+
 	}
 }

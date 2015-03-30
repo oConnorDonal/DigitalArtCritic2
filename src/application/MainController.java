@@ -1,55 +1,35 @@
+/*
+ * C11529667
+ * Donal O Connor
+ * 
+ * MainController Class
+ * 
+ */
+
+
+
 package application;
 
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.Vector;
-
-import org.opencv.core.Size;
-
 import javax.imageio.ImageIO;
-
 import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfFloat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfRect;
 import org.opencv.core.Point;
-import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
-import org.opencv.imgproc.Imgproc;
-import org.opencv.objdetect.CascadeClassifier;
-import org.opencv.utils.Converters;
-import org.opencv.video.BackgroundSubtractor;
-
-import com.sun.javafx.geom.Line2D;
-import com.sun.javafx.geom.Vec2d;
-
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.geometry.Point2D;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.shape.Circle;
-import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class MainController {
 	
-	
+	//GUI components are referencing in the fxml file
 	
 	@FXML
     private BorderPane borderPane;
@@ -73,28 +53,34 @@ public class MainController {
 	@FXML
 	private ImageView bigImage;
 	
-	//private BufferedImage image; 
-	
 	private Stage stage;
 	
-	//sends primary stage through form the main so controller can use it and refer to the same stage
+	//sends primary stage through from the main class so controller can use it and refer to the same stage
 	
 	public void init(Stage primaryStage) {
 		
-		this.stage = primaryStage;
-		//this.image = image;
+		this.stage = primaryStage;		
 	}
+	
+	
 	
 	Core core = new Core();
 	Format format = new Format();
 	Filter filter = new Filter();
+	Corners corners = new Corners();
 	FaceFeatures face = new FaceFeatures();
 	LineFeatures lFeature = new LineFeatures();
 	
-	boolean vpButton = true;
+	boolean vpButtonBool = true;
+	boolean fButtonBool = true;
+	boolean hLineButtonBool = true;
 	
 	
 	BufferedImage image = null;
+	
+	/*
+	 * 
+	 */
 	
 	
 	
@@ -133,9 +119,10 @@ public class MainController {
 		
 		BufferedImage tut = null;
 		
-		if(vpButton == true)
+		if(vpButtonBool == true)
 		{
 			BufferedImage image1 = format.matToBuffColour( lFeature.showLineSegments( filter.toCanny((format.buffToMat(image)) ) ,format.buffToMat(image) ))  ;		
+			//BufferedImage image1 = format.matToBuffColour(corners.getTcorners(format.buffToMat(image),format.buffToMat(image)));
 			Image convertedImage = SwingFXUtils.toFXImage(image1, null);//did have image1			
 			bigImage.setImage(convertedImage);
 			
@@ -152,104 +139,81 @@ public class MainController {
 			tutorialImage.setImage(tutorialImageC);
 			textArea.setText(string);
 			
-			vpButton = false;
+			vpButtonBool = false;
 		}
 		else
 		{
 			Image originalImage = SwingFXUtils.toFXImage(image, null);
 			bigImage.setImage(originalImage);
-			vpButton = true;
+			vpButtonBool = true;
 		}
 		
 		
 		
 			
 	}
+	
 	@FXML
 	public void getROT(ActionEvent event)throws IOException{
 		
-		BufferedImage image1 = format.matToBuffColour(lFeature.getHorizonLine(format.buffToMat(image),format.buffToMat(image)));
-		
-		System.out.println("hey");
-		
+		if(hLineButtonBool == true)
+		{
+			BufferedImage image1 = format.matToBuffColour
+								(lFeature.getHorizonLine(format.buffToMat(image),format.buffToMat(image)));
+			
+								Image convertedImage = SwingFXUtils.toFXImage(image1, null);		
+								bigImage.setImage(convertedImage);
+								hLineButtonBool = false;
+		}
+		else
+		{
+			Image originalImage = SwingFXUtils.toFXImage(image, null);
+			bigImage.setImage(originalImage);
+			hLineButtonBool = true;			
+		}
 	}
+	
 	@FXML
 	public void getPorportions(ActionEvent event)throws IOException{
 		
-		BufferedImage image1 = format.matToBuffColour(face.displayFaceFeatures(format.buffToMat(image)));
+		if(fButtonBool == true)
+		{
+			BufferedImage image1 = format.matToBuffColour(face.displayFaceFeatures(format.buffToMat(image)));
+			//BufferedImage image1 = format.matToBuffColour(getOutLine(format.toThresh(format.buffToMat(image)),format.buffToMat(image) )); 
+			Image convertedImage = SwingFXUtils.toFXImage(image1, null);		
+			bigImage.setImage(convertedImage);
+			fButtonBool = false;
+		}
+		else
+		{
+			Image originalImage = SwingFXUtils.toFXImage(image, null);
+			bigImage.setImage(originalImage);
+			vpButtonBool = true;
+			
+		}
 		
-		System.out.println("hey");
 		
 	}
 	@FXML
 	public void finishTutorial(ActionEvent event)throws IOException{
 		
-		System.out.println("hey");
+		
 		
 	}
 	
 	
 	
-	
-	
-	
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	public static double toRadians(float inFloat){
-		
-		return inFloat *  Math.PI/180.0f;
-		
-	}
 	
 	public boolean isEqualPoint(Point pt1,Point pt2){		
 		
 		return pt1.equals(pt2);
 		
 	}
-	
-	
-	
-	
-	
-	
-	
 	public Mat getOutLine(Mat inImage,Mat originalImage){		
 		
 		
 		return filter.getContours(inImage,originalImage);
 	}
-	
-	
-	
-	
-	
-	
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	
 	
 }
